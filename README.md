@@ -1,110 +1,72 @@
-# Meltybrain simulator and reference firmware
+# Capstone — combat-robot physics simulators
 
-This repository couples a deterministic planar robot simulation to the same
-C++17 controller and safety runtime used by the reference embedded builds. The
-desktop UI keeps physical robot truth separate from the firmware's assumptions,
-making sensor placement, calibration error, phase drift, traction, saturation,
-and arming behavior visible rather than hiding them behind ideal inputs.
+Two independent desktop engineering sandboxes, in one repository:
 
-## Build and run
+| Project | Mechanism | Start |
+| --- | --- | --- |
+| [Melty](melty/README.md) | Spinning wheeled Meltybrain robot, native C++ physics and reference firmware | `./melty/run_sim.sh` |
+| [Droopy](droopy/README.md) | Twin angled rotors, reaction torque, gyroscopic coupling and contact-driven shuffling | `./droopy/run_sim.sh` |
 
-Python 3.10+, a C++17 compiler, and CMake 3.20+ are required. From the repository
-root:
+Both offer interactive physics visualization and telemetry. Droopy is an
+**exploratory model**, not a calibrated replica of the real competition robot.
+Read each project's model limits before interpreting results.
+
+## Layout
+
+```text
+Capstone/
+├── melty/                 # Original simulator, C++ firmware, docs and tests
+│   ├── sim/
+│   ├── firmware/
+│   └── run_sim.sh
+├── droopy/                # Python 3-D dynamics, UI, explainers and tests
+│   ├── droopy/
+│   └── run_sim.sh
+└── .venv/                 # Optional shared environment (not in Git)
+```
+
+The original top-level Melty files now live in `melty/`. The earlier `Drupi/`
+prototype is renamed `droopy/`, including its Python package. The Git root
+remains `Capstone/`.
+
+## Setup
+
+Python 3.10+ is required. Melty additionally needs a C++17 compiler and CMake 3.20+.
+From this repository root:
 
 ```sh
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cmake -S . -B build -DPython_EXECUTABLE="$PWD/.venv/bin/python"
-cmake --build build -j
-ctest --test-dir build --output-on-failure
-PYTHONPATH=build/python .venv/bin/python -m pytest tests/test_ui.py
-PYTHONPATH=build/python .venv/bin/python -m sim.ui.main
+.venv/bin/pip install -r melty/requirements.txt -r droopy/requirements.txt
+cmake -S melty -B melty/build -DPython_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --build melty/build -j
 ```
 
-After building, `./run_sim.sh` launches the same UI using this repository's
-virtual environment and native module even when invoked from another directory.
+Each launcher first checks its project's `.venv`, then the shared root `.venv`.
+The launchers work from any directory. Do not move an existing virtual environment
+or reuse a CMake cache from before the directory reorganization; create/reconfigure
+instead.
 
-For an offscreen launch/render/lifecycle check:
+## Run
 
 ```sh
-QT_QPA_PLATFORM=offscreen PYTHONPATH=build/python .venv/bin/python -m sim.ui.main --smoke
+./melty/run_sim.sh
+./droopy/run_sim.sh
 ```
 
-That writes `/tmp/meltybrain-ui.png` and shuts the worker down cleanly. The CLI
-simulator is `build/sim_cli`.
+See the project READMEs for live controls, detailed physics assumptions,
+recordings, CLI experiments, and test commands.
 
-The Controls tab changes live spin, translation direction and strength, and the
-arm request. Configuration values are structural: **Apply & Reset** validates a
-complete candidate, then replaces the running simulator only if every value is
-valid. Physical sensor geometry and firmware sensor assumptions are intentionally
-separate. Reference presets live in `sim/config/robot.json` and
-`sim/config/scenario.json`; each includes the schema version, full configuration,
-seed, and initial state.
+## Validate
 
-Zero Phase is available only while disarmed. The worker holds its RC command from
-the next absolute acquisition boundary through transport and the control boundary
-that consumes it, so the action works while paused and does not depend on UI or
-render timing. This synchronous action is limited to 10,000 physics ticks to keep
-the interface responsive. Longer configured transport windows remain valid for
-fault experiments; use a lower receiver delay, a larger physics timestep, or
-Apply & Reset with an estimated phase for those scenarios.
-
-`scenario.json` is a calibrated single-speed reference demo: load it, arm at zero
-spin, then command 25% spin and a +X translation demand. Its 2.15 rad translation
-phase offset was tuned for the reference model near 112 rad/s. It illustrates the
-calibration workflow; changing speed, latency, geometry, or dynamics can change the
-required offset and does not guarantee the same world-frame heading.
-
-The main window puts live controls and telemetry beside the arena; every
-structural setting and preset lives behind **⚙ Settings**. The **direction dial**
-sets translation angle (0° = +X, 90° = +Y) and strength (distance from centre);
-its cyan dot marks the robot's actual direction of travel. With **World-aligned
-steering** on (the default) the dial is in world coordinates: the controls rotate
-the demand into the firmware's phase frame, cancelling phase-estimate drift and
-the speed-dependent motor/latency lag, and trim the remainder from the measured,
-revolution-averaged drive force. It stands in for a driver watching the robot and
-uses simulation truth; turn it off to send the dial angle to firmware unchanged. **Sim speed** scales simulated time from 0.001× to 4× real time, which
-is how individual rotations become visible. With **Motor vectors** on, hover any
-arrow for a summary or click it for a live derivation that recomputes the value
-from the inputs firmware or the plant consumed and checks it against the native
-result.
-
-The telemetry panel can record CSV samples plus a neighboring JSON metadata file
-using the `meltybrain-simulator-recording` v1 schema shared with the CLI. It
-contains the epoch's initial state, full configuration, seed, exact worker-accepted
-command events, duration, and final state. Starting midway through an epoch writes
-the buffered history from time zero; resetting or applying a valid configuration
-finalizes that epoch first. Plot a recording with:
+From the repository root with the shared environment:
 
 ```sh
-.venv/bin/python tools/plot.py run.csv --output run.png
+ctest --test-dir melty/build --output-on-failure
+(cd melty && QT_QPA_PLATFORM=offscreen PYTHONPATH=build/python ../.venv/bin/python -m pytest -q tests)
+(cd droopy && QT_QPA_PLATFORM=offscreen ../.venv/bin/python -m pytest -q tests)
+QT_QPA_PLATFORM=offscreen ./melty/run_sim.sh --smoke
+QT_QPA_PLATFORM=offscreen ./droopy/run_sim.sh --smoke
 ```
 
-## Production-source relationship
-
-`melty_firmware` compiles `firmware/src/controller.cpp` and
-`firmware/src/runtime.cpp`, the production controller/runtime sources used by the
-simulator and intended by the board adapters. Simulation truth never enters those
-classes; it reaches them through the `Hal` interface. PlatformIO reference
-environments build the embedded adapter around that same source.
-
-The checked-in ESP32 and Teensy profiles are unselected reference assumptions,
-not robot-ready wiring or calibration. No hardware has been selected or validated.
-Before operating a physical spinner, validate electrical levels, receiver and ESC
-behavior, sensor range and mounting, timing, mechanical containment, vibration,
-failsafe behavior, and an external kill path.
-
-## Current model limits
-
-The simulator is planar and uses simplified rigid-body, tire, motor, battery, and
-sensor models. It does not model structural flex, impacts, thermal limits, detailed
-battery sag, radio interference, ESC startup protocols, or hardware scheduling
-jitter. An accelerometer provides radial spin magnitude rather than absolute world
-heading, so phase depends on its reset reference and integration accuracy. Recorded
-runs are reproducible for the same build, preset, seed, and command events; they are
-not evidence that the physical robot is safe or correctly calibrated.
-
-Desktop simulation time preserves fractional physics ticks independently of the
-render rate. Each worker event processes at most 200 ticks and retains at most one
-second of wall-clock backlog. Under sustained overload the simulation therefore
-slows relative to real time so controls and shutdown remain responsive.
+Generated build files, virtual environments, and Python caches remain excluded
+from Git. Neither simulator establishes the safety of a physical combat robot.

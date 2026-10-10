@@ -12,7 +12,9 @@ Verified on macOS with Apple Clang 17, Python 3.13, and Qt 6.11.
 - Desktop launcher smoke test from outside the repository: passed.
 - CLI recording replay reproduced position and spin within serialized floating-point precision.
 
-Run the standard checks after building as described in the root README:
+Run the standard checks from `Capstone/melty` after building as described in
+`melty/README.md`. If using the shared root environment, replace `.venv/bin/`
+with `../.venv/bin/` in the commands below:
 
 ```sh
 ctest --test-dir build --output-on-failure
