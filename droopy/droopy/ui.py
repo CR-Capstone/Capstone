@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import copy
 import json
 import math
 import sys
 import time
 from collections import deque
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import numpy as np
@@ -17,12 +18,18 @@ from PySide6.QtGui import QAction, QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
     QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QMainWindow,
-    QMessageBox, QPushButton, QMenu, QScrollArea, QSplitter, QTabWidget, QToolBar, QVBoxLayout, QWidget,
+    QMessageBox, QPushButton, QMenu, QScrollArea, QSlider, QSplitter, QTabWidget, QToolBar, QVBoxLayout, QWidget,
 )
 
 from .control import Command
 from .physics import Config, Simulator
 from .explain import KEYS, explanation
+from .lesson import GuidedLesson
+from .joystick import DirectionJoystick
+from .steering import DirectionController
+from .presets import robot_preset, DEFAULT_PRESET, POUNDS_TO_KG
+from .impulse import ImpulseAccumulator
+from .motion_view import IntegratedMotionView
 
 
 STYLE = """
@@ -44,6 +51,25 @@ QMenuBar,QMenu { background:#111925; }
 QMenu::item:selected { background:#29435e; }
 QToolTip { background:#172333; color:#d6e0ec; border:1px solid #38516d; }
 """
+
+
+class PlaybackSlider(QWidget):
+    """Log scale controls playback only, never motor frequency."""
+    def __init__(self):
+        super().__init__()
+        layout=QHBoxLayout(self); layout.setContentsMargins(0,0,0,0)
+        self.slider=QSlider(Qt.Orientation.Horizontal); self.slider.setRange(0,260)
+        self.setFixedWidth(200)
+        self.slider.setFixedWidth(130); self.slider.setAccessibleName('Playback speed')
+        self.label=QLabel(); self.label.setFixedWidth(52)
+        layout.addWidget(self.slider); layout.addWidget(self.label)
+        self.slider.valueChanged.connect(self._changed); self.setValue(.1)
+    def value(self): return 4. if self.slider.value()==260 else 10**(self.slider.value()/100-2)
+    def setValue(self,value):
+        self.slider.setValue(round(100*(math.log10(max(.01,min(4.,value)))+2))); self._changed()
+    def _changed(self):
+        self.label.setText(f'{self.value():.2f}×')
+        self.slider.setToolTip('Playback only: slow motion ← → fast. Gait frequency is unchanged.')
 
 
 class Arena(QWidget):
@@ -95,7 +121,8 @@ class Arena(QWidget):
             p.drawPolyline(QPolygonF([point(v) for v in self.trail]))
         # Visual body outline only; actual collision primitives are the feet.
         body = [(-.09,-.11,0),(.09,-.11,0),(.09,.11,0),(-.09,.11,0)]
-        verts = [sim.position + sim.rotation @ np.array(v) for v in body]
+        visual_scale=sim.config.rotor_offset_y/.105
+        verts = [sim.position + sim.rotation @ (np.array(v)*visual_scale) for v in body]
         p.setPen(QPen(QColor("#aebed0"), 2))
         p.setBrush(QColor("#394e65"))
         p.drawPolygon(QPolygonF([point(v) for v in verts]))
@@ -118,12 +145,12 @@ class Arena(QWidget):
             u /= np.linalg.norm(u)
             v = np.cross(axis,u)
             color = "#ff796d" if i == 0 else "#74b9ff"
-            ring = [point(c + sim.rotation @ (.105*(math.cos(t)*u + math.sin(t)*v))) for t in np.linspace(0,2*math.pi,49)]
+            ring = [point(c + sim.rotation @ (sim.config.rotor_offset_y*(math.cos(t)*u + math.sin(t)*v))) for t in np.linspace(0,2*math.pi,49)]
             p.setPen(QPen(QColor(color), 1))
             p.setBrush(Qt.BrushStyle.NoBrush)
             p.drawPolyline(QPolygonF(ring))
             a = sim.rotor_angles[i]
-            d = sim.rotation @ (.105*(math.cos(a)*u + math.sin(a)*v))
+            d = sim.rotation @ (sim.config.rotor_offset_y*(math.cos(a)*u + math.sin(a)*v))
             line(c-d, c+d, color, 6)
             line(c, c + sim.rotation @ axis*.08, color, 2)
         forward = sim.position + sim.rotation @ np.array([.15,0,0])
@@ -133,7 +160,7 @@ class Arena(QWidget):
             line(sim.position, velocity_end, "#76d5f7", 3)
             self._vector_hits.append(("translation", point(sim.position), point(velocity_end)))
         p.setPen(QColor("#dce5ef"))
-        p.drawText(18, 27, "DROOPY  /  TWIN-ROTOR DYNAMICS")
+        p.drawText(18, 27, f"DROOPY  /  {sim.config.mass/POUNDS_TO_KG:.2f} LB  /  TWIN-ROTOR DYNAMICS")
         p.drawText(18, 49, "Grid 10 cm  ·  yellow: contact forces  ·  green: forward (+X)")
         p.drawText(18, self.height()-38, "Camera follows robot. Ring = rotor sweep; blades may alias at display rate.")
         p.drawText(18, self.height()-18, "Exploratory model · not measured Droopy geometry · no weapon impacts")
@@ -177,9 +204,18 @@ class Trace(QWidget):
         self.window_s = 5.0
         self.max_speed = 450.
         self.max_torque = .8
+        self.speed_magnitude = True
         self.visible = {key: key in ("requested_l","requested_r","speed_l","speed_r") for key in self.CHANNELS}
         self.setMinimumHeight(245)
         self.setMouseTracking(True)
+
+    def plotted_value(self, sample, key):
+        value=sample[key]
+        return abs(value) if self.speed_magnitude and key.startswith(('target','requested','speed')) else value
+
+    @staticmethod
+    def rotation_label(value):
+        return '+ axis' if value>1e-9 else ('− axis' if value < -1e-9 else 'stopped')
 
     def displayed(self):
         if not self.samples:
@@ -201,13 +237,16 @@ class Trace(QWidget):
         for key,(label,_) in self.CHANNELS.items():
             if self.visible[key]:
                 unit = 'N·m' if key.startswith('torque') else 'rad/s'
-                lines.append(f"{label}: {sample[key]:+.4f} {unit}")
+                value=self.plotted_value(sample,key)
+                direction=f' ({self.rotation_label(sample[key])})' if key.startswith(('target','requested','speed')) else ''
+                lines.append(f"{label}: {value:.4f} {unit}{direction}")
+        lines.append('Magnitude = absolute angular speed; error and torque remain signed.')
         self.setToolTip('\n'.join(lines))
 
     def paintEvent(self, event):
         p=QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing); p.fillRect(self.rect(),QColor("#101923"))
         active=[key for key in self.CHANNELS if self.visible[key]]
-        p.setPen(QColor("#c6d3e0")); p.drawText(12,19,"MOTOR CONTROL HISTORY  ·  hover for values  ·  target / actual-after-tick")
+        p.setPen(QColor("#c6d3e0")); p.drawText(12,19,'SPEED MAGNITUDE |ω| · direction separate · hover for values' if self.speed_magnitude else 'SIGNED SPEED ω · target / actual-after-tick · hover for values')
         x,y=12,37
         for key in active:
             label=self.CHANNELS[key][0]
@@ -220,6 +259,10 @@ class Trace(QWidget):
                 ([k for k in active if k.startswith("torque")],"N·m")]
         groups=[g for g in groups if g[0]]
         samples=self.displayed()
+        if samples:
+            last=samples[-1]
+            p.setPen(QColor('#aebed0')); p.drawText(12,y+18,f"Actual rotation: L {self.rotation_label(last['speed_l'])} · R {self.rotation_label(last['speed_r'])} (about each rotor axis)")
+            y+=18
         if len(samples)>1 and groups:
             chart_top=y+9
             lane_h=(self.height()-chart_top-24)/len(groups)
@@ -232,19 +275,22 @@ class Trace(QWidget):
             if drawing[-1] is not samples[-1]: drawing.append(samples[-1])
             for lane,(keys,unit) in enumerate(groups):
                 top=chart_top+lane*lane_h; mid=top+12+lane_h/2
-                p.setPen(QColor("#344659")); p.drawLine(55,int(mid),self.width()-15,int(mid))
+                positive=self.speed_magnitude and unit=='speed rad/s'
+                zero=top+lane_h-5 if positive else mid
+                height=max(4,lane_h-35)
+                p.setPen(QColor("#344659")); p.drawLine(55,int(zero),self.width()-15,int(zero))
                 limit=self.max_torque if unit=='N·m' else (0. if unit=='error rad/s' else self.max_speed)
                 scale=max(1e-6,limit,max(abs(s[k]) for s in samples for k in keys))*1.08
-                p.setPen(QColor("#7f91a8")); p.drawText(12,int(top+12),f"±{scale:.3g} {unit}")
+                p.setPen(QColor("#7f91a8")); p.drawText(12,int(top+12),f"{'0…' if positive else '±'}{scale:.3g} {unit}")
                 pen=QPen(QColor('#5b6274'),1,Qt.PenStyle.DashLine); p.setPen(pen)
                 if limit:
-                    for sign in (-1,1):
-                        yy=mid-sign*limit/scale*(lane_h-35)/2
+                    for sign in ((1,) if positive else (-1,1)):
+                        yy=zero-sign*limit/scale*height/(1 if positive else 2)
                         p.drawLine(55,int(yy),self.width()-15,int(yy))
                 for key in keys:
-                    points=[QPointF(55+(s['t']-start)/span*(self.width()-70),mid-s[key]/scale*(lane_h-35)/2) for s in drawing]
+                    points=[QPointF(55+(s['t']-start)/span*(self.width()-70),zero-self.plotted_value(s,key)/scale*height/(1 if positive else 2)) for s in drawing]
                     pen=QPen(QColor(self.CHANNELS[key][1]),2)
-                    if key.startswith('target'): pen.setStyle(Qt.PenStyle.DashLine)
+                    if key.startswith(('target','requested')): pen.setStyle(Qt.PenStyle.DashLine)
                     p.setPen(pen); p.drawPolyline(QPolygonF(points))
             p.setPen(QColor("#7f91a8")); p.drawText(55,self.height()-7,f"{start:.3f} s")
             p.drawText(self.width()-90,self.height()-7,f"{end:.3f} s")
@@ -256,7 +302,9 @@ class Window(QMainWindow):
         super().__init__()
         self.setWindowTitle("Droopy Engineering Simulator")
         self.resize(1280,860)
-        self.sim = Simulator()
+        self.preset_name=DEFAULT_PRESET
+        initial_config,self.preset_command=robot_preset(self.preset_name)
+        self.sim = Simulator(initial_config)
         self.running = False
         self.accumulator = 0.0
         self.rate_wall_start=time.monotonic(); self.rate_sim_start=0.; self.actual_rate=0.
@@ -266,8 +314,13 @@ class Window(QMainWindow):
         self.record_meta = None
         self.last_consumed_command = None
         self.last_batch_count = 0
+        self.inspector_capture=None; self._inspector_render_key=None
+        self.lesson_ticks_remaining=0
+        self.direction_controller=DirectionController()
+        self.impulse=ImpulseAccumulator()
         self.arena = Arena(self.sim)
         self.trace = Trace()
+        self.trace.max_speed=self.sim.config.max_speed;self.trace.max_torque=self.sim.config.max_torque
         self.inputs = {}
         self.settings = {}
         self._build()
@@ -289,7 +342,15 @@ class Window(QMainWindow):
     def _build(self):
         self.setStyleSheet(STYLE)
         self.setMinimumSize(1080,720)
+        robot_menu=self.menuBar().addMenu('Robot setup')
+        for name,label in [('9lb','9 lb — scaled illustrative robot'),('3lb','3 lb — original reference')]:
+            action=robot_menu.addAction(label)
+            action.triggered.connect(lambda checked=False,n=name:self.load_robot_preset(n))
         plot_menu=self.menuBar().addMenu("Plot channels")
+        self.magnitude_action=plot_menu.addAction('Speed magnitude |ω| (uncheck for signed speed)')
+        self.magnitude_action.setCheckable(True);self.magnitude_action.setChecked(True)
+        self.magnitude_action.toggled.connect(self.set_speed_magnitude)
+        plot_menu.addSeparator()
         self.plot_actions={}
         for title,keys in [('Speed tracking',('requested_l','requested_r','speed_l','speed_r')),
                            ('Left servo',('target_l','requested_l','speed_l','error_l','torque_l')),
@@ -308,7 +369,7 @@ class Window(QMainWindow):
             item.triggered.connect(lambda checked=False,s=seconds: self.set_plot_window(s))
         toolbar = QToolBar("Simulation"); toolbar.setMovable(False); self.addToolBar(toolbar)
         self.run_button = QPushButton("▶  START"); self.run_button.setCheckable(True); self.run_button.clicked.connect(self.toggle_run)
-        self.step_button = QPushButton("STEP"); self.step_button.setToolTip("Advance exactly one fixed physics tick."); self.step_button.clicked.connect(lambda: self.advance(1))
+        self.step_button = QPushButton("STEP"); self.step_button.setToolTip("Advance exactly one fixed physics tick."); self.step_button.clicked.connect(self.step_and_capture)
         self.reset_button = QPushButton("RESET"); self.reset_button.clicked.connect(self.reset)
         self.record = QPushButton("RECORD CSV…"); self.record.clicked.connect(self.toggle_record)
         self.settings_button = QPushButton("⚙ SETTINGS"); self.settings_button.clicked.connect(self.show_settings)
@@ -320,7 +381,8 @@ class Window(QMainWindow):
         self.side_tabs=QTabWidget()
         side_scroll=QScrollArea(); side_scroll.setWidgetResizable(True)
         left=QWidget(); layout=QVBoxLayout(left); side_scroll.setWidget(left)
-        self.side_tabs.addTab(side_scroll,'Controls & telemetry')
+        self.side_tabs.addTab(side_scroll,'Controls')
+        self.robot_label=QLabel();self.robot_label.setWordWrap(True);layout.addWidget(self.robot_label)
         heading=QLabel("LIVE CONTROLS + TELEMETRY"); heading.setObjectName("section"); layout.addWidget(heading)
         form=QFormLayout()
         self.enabled=QCheckBox("Enable motors (off = active braking)"); self.enabled.setObjectName("motors_enabled"); form.addRow(self.enabled)
@@ -329,8 +391,8 @@ class Window(QMainWindow):
             ("spin","Base speed [rad/s]",0,450,220,10),("amplitude","Gait amplitude [rad/s]",0,300,180,10),
             ("frequency","Gait frequency [Hz]",.1,10,1,.1),("bias","Signed bias [rad/s]",-300,300,0,10),
             ("left","Manual left [rad/s]",-450,450,220,10),("right","Manual right [rad/s]",-450,450,-220,10)]:
-            self.inputs[key]=self.number(form,label,lo,hi,val,step)
-        self.speed=QDoubleSpinBox(); self.speed.setRange(.01,4); self.speed.setSingleStep(.1); self.speed.setValue(.5)
+            self.inputs[key]=self.number(form,label,lo,hi,getattr(self.preset_command,key),step,6)
+        self.speed=PlaybackSlider()
         self.speed.setToolTip('Requested playback rate; under heavy load actual simulation runs slower.')
         toolbar.addSeparator(); toolbar.addWidget(QLabel('Speed')); toolbar.addWidget(self.speed)
         realtime=QPushButton('1×'); realtime.clicked.connect(lambda:self.speed.setValue(1)); toolbar.addWidget(realtime)
@@ -339,7 +401,7 @@ class Window(QMainWindow):
         self.telemetry=QLabel(); self.telemetry.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse); layout.addWidget(self.telemetry)
         layout.addStretch()
         explain_page=QWidget(); layout=QVBoxLayout(explain_page)
-        self.side_tabs.addTab(explain_page,'Physics inspector')
+        self.side_tabs.addTab(explain_page,'Physics')
         explain_label=QLabel("LIVE PHYSICS EXPLAINER"); explain_label.setObjectName("section"); layout.addWidget(explain_label)
         flow=QLabel('Open-loop gait → speed target → rotor servo ↔ rotor speed\nTorque → reaction + gyro → attitude → floor contacts\nFloor forces → translation; no chassis-motion feedback.')
         flow.setWordWrap(True); layout.addWidget(flow)
@@ -347,6 +409,11 @@ class Window(QMainWindow):
         for key,label in [('control','Setpoint'),('motor','Servo'),('rotation','Gyro'),('contacts','Floor')]:
             block=QPushButton(label); block.clicked.connect(lambda checked=False,k=key:self.open_explanation(k)); blocks.addWidget(block)
         layout.addLayout(blocks)
+        capture_bar=QHBoxLayout()
+        capture=QPushButton('Capture current step'); capture.clicked.connect(self.capture_inspector); capture_bar.addWidget(capture)
+        self.live_math=QCheckBox('Live math'); self.live_math.toggled.connect(lambda _:self.capture_inspector()); capture_bar.addWidget(self.live_math)
+        layout.addLayout(capture_bar)
+        self.capture_label=QLabel('Math frozen until you capture a step.'); self.capture_label.setWordWrap(True); layout.addWidget(self.capture_label)
         self.explain_select=QComboBox(); self.explain_select.addItems([label for _,label in KEYS]); self.explain_select.currentIndexChanged.connect(self.refresh_explanation); layout.addWidget(self.explain_select)
         detail_scroll=QScrollArea(); detail_scroll.setWidgetResizable(True); detail_scroll.setMinimumHeight(280)
         self.detail=QLabel(); self.detail.setObjectName("detail"); self.detail.setWordWrap(True); self.detail.setTextFormat(Qt.TextFormat.RichText); self.detail.setAlignment(Qt.AlignmentFlag.AlignTop); detail_scroll.setWidget(self.detail); layout.addWidget(detail_scroll,1)
@@ -359,6 +426,8 @@ class Window(QMainWindow):
         self.zoom=QComboBox(); self.zoom.addItems(["Close","Medium","Wide"]); self.zoom.currentIndexChanged.connect(self.set_zoom); view.addWidget(self.zoom); view.addStretch(); visual.addLayout(view)
         plot_controls=QHBoxLayout()
         plot_button=QPushButton('Plot channels ▾'); plot_button.setMenu(plot_menu); plot_controls.addWidget(plot_button)
+        self.show_plot=QCheckBox('Show motor traces'); self.show_plot.setChecked(True)
+        self.show_plot.toggled.connect(self.trace.setVisible); plot_controls.addWidget(self.show_plot)
         self.plot_window_label=QLabel('Window: 5 s · ≤20,000 ticks'); plot_controls.addWidget(self.plot_window_label); plot_controls.addStretch()
         visual.addLayout(plot_controls)
         visual.addWidget(self.arena,1); visual.addWidget(self.trace)
@@ -367,7 +436,33 @@ class Window(QMainWindow):
         visual.removeWidget(self.arena); visual.removeWidget(self.trace)
         self.view_splitter.addWidget(self.arena); self.view_splitter.addWidget(self.trace)
         self.view_splitter.setSizes([430,280]); visual.addWidget(self.view_splitter,1)
+        self.trace.setVisible(self.show_plot.isChecked())
         root.addWidget(self.side_tabs); root.addWidget(right); root.setSizes([430,850])
+        self.lesson=GuidedLesson()
+        lesson_scroll=QScrollArea(); lesson_scroll.setWidgetResizable(True); lesson_scroll.setWidget(self.lesson)
+        self.side_tabs.insertTab(0,lesson_scroll,'Learn'); self.side_tabs.setCurrentIndex(0)
+        self.lesson.experiment_requested.connect(self.lesson_experiment)
+        self.lesson.step_requested.connect(self.lesson_step)
+        self.lesson.inspect_requested.connect(self.open_explanation)
+        drive_page=QWidget();drive_layout=QVBoxLayout(drive_page)
+        drive_title=QLabel('REQUESTED DIRECTION ≠ ACTUAL TRAVEL');drive_title.setObjectName('section');drive_layout.addWidget(drive_title)
+        self.direction_enabled=QCheckBox('Experimental direction assist (uses simulation truth)')
+        drive_layout.addWidget(self.direction_enabled)
+        try_direction=QPushButton('Load 3 lb calibrated −160° example')
+        try_direction.clicked.connect(self.direction_demo); drive_layout.addWidget(try_direction)
+        self.direction_enabled.toggled.connect(self.direction_mode_changed)
+        self.joystick=DirectionJoystick();drive_layout.addWidget(self.joystick)
+        self.joystick.changed.connect(lambda angle,strength:self.refresh())
+        drive_note=QLabel('Yellow = requested world direction and strength. Cyan = measured travel. Drag or use arrow keys; right-click/Space centres and requests braking. Enable motors in Controls first. Only motor commands change—never chassis position.')
+        drive_note.setWordWrap(True);drive_layout.addWidget(drive_note)
+        self.steering_status=QLabel('Assist off: the gait is open-loop.');self.steering_status.setWordWrap(True);drive_layout.addWidget(self.steering_status)
+        drive_layout.addStretch();self.side_tabs.insertTab(1,drive_page,'Joystick')
+        self.motion_view=IntegratedMotionView()
+        motion_scroll=QScrollArea();motion_scroll.setWidgetResizable(True);motion_scroll.setWidget(self.motion_view)
+        self.side_tabs.addTab(motion_scroll,'Motion')
+        motion_button=QPushButton('Integrated forces → motion')
+        motion_button.clicked.connect(lambda:self.side_tabs.setCurrentWidget(motion_scroll))
+        view.addWidget(motion_button)
         self.settings_dialog=self._settings_dialog()
         self.statusBar().showMessage("Paused. Enable motors, then Start. Settings reset the experiment.")
         self.mode.currentTextChanged.connect(self.mode_changed); self.mode_changed(self.mode.currentText())
@@ -403,8 +498,19 @@ class Window(QMainWindow):
     def show_settings(self):
         self.settings_dialog.show(); self.settings_dialog.raise_()
 
+    def load_robot_preset(self,name):
+        config,command=robot_preset(name)
+        for key,widget in self.settings.items():widget.setValue(getattr(config,key))
+        self.preset_name=name;self.preset_command=command
+        self.direction_enabled.setChecked(False)
+        self.apply_config()
+        self.mode.setCurrentText(command.mode)
+        for key,widget in self.inputs.items():widget.setValue(getattr(command,key))
+        self.refresh()
+        self.statusBar().showMessage(f'{name} setup loaded. Geometry, inertia, motor/contact assumptions and gait scaled together. Motors disabled.')
+
     def reset_settings(self):
-        defaults=Config()
+        defaults,_=robot_preset(self.preset_name)
         for key,widget in self.settings.items(): widget.setValue(getattr(defaults,key))
 
     def mode_changed(self, mode):
@@ -414,6 +520,20 @@ class Window(QMainWindow):
         if mode == "Constant counterspin":
             self.inputs["amplitude"].setEnabled(False)
             self.inputs["frequency"].setEnabled(False)
+
+    def direction_demo(self):
+        self.load_robot_preset('3lb')
+        self.lesson_experiment('demo')
+        self.direction_enabled.setChecked(True); self.joystick.set_value(-160.,1.)
+        self.side_tabs.setCurrentIndex(1); self.refresh()
+        self.statusBar().showMessage('Original 3 lb calibrated example loaded (not 9 lb). Press START; cyan travel may still miss yellow demand.')
+
+    def direction_mode_changed(self, enabled):
+        self.direction_controller.reset()
+        if enabled:
+            self.mode.setCurrentText('Alternating gait')
+        self.mode.setEnabled(not enabled)
+        if hasattr(self,'lesson'): self.refresh()
 
     def command(self):
         return Command(enabled=self.enabled.isChecked(),mode=self.mode.currentText(),**{k:w.value() for k,w in self.inputs.items()})
@@ -428,6 +548,13 @@ class Window(QMainWindow):
         self.step_button.setEnabled(not self.running)
 
     def tick(self):
+        if self.lesson_ticks_remaining:
+            count=min(100,self.lesson_ticks_remaining)
+            self.advance(count); self.lesson_ticks_remaining=max(0,self.lesson_ticks_remaining-count)
+            if not self.lesson_ticks_remaining:
+                self.capture_inspector(); self.lesson.capture_current()
+                self.run_button.setEnabled(True); self.step_button.setEnabled(True)
+            return
         now = time.monotonic(); elapsed = min(.1,now-self.last_wall); self.last_wall = now
         if self.running:
             self.accumulator += elapsed*self.speed.value()
@@ -442,12 +569,41 @@ class Window(QMainWindow):
                 self.rate_wall_start=now; self.rate_sim_start=self.sim.time
                 self.state_label.setText(f'SIM RUNNING · {self.actual_rate:.2f}× actual')
 
+    def capture_inspector(self):
+        self.inspector_capture=(self.sim.last_diagnostic,replace(self.sim.config),replace(self.last_consumed_command) if self.last_consumed_command else None)
+        self._inspector_render_key=None; self.refresh_explanation()
+
+    def step_and_capture(self):
+        self.advance(1); self.capture_inspector(); self.lesson.capture_current()
+
+    def lesson_step(self, seconds):
+        if self.running: self.toggle_run()
+        self.lesson_ticks_remaining=max(1,math.ceil(seconds/self.sim.config.dt))
+        self.run_button.setEnabled(False); self.step_button.setEnabled(False)
+
+    def lesson_experiment(self, name):
+        self.reset_settings()
+        self.settings['friction'].setValue(0. if name=='no_grip' else robot_preset(self.preset_name)[0].friction)
+        self.apply_config()
+        self.mode.setCurrentText('Constant counterspin' if name=='constant' else 'Alternating gait')
+        _,defaults=robot_preset(self.preset_name)
+        for key,box in self.inputs.items(): box.setValue(getattr(defaults,key))
+        self.direction_enabled.setChecked(False)
+        self.enabled.setChecked(True); self.speed.setValue(.1)
+        self.side_tabs.setCurrentIndex(0)
+        self.statusBar().showMessage('Example loaded, paused. Press START or advance a quarter cycle. No artificial propulsion.')
+        self.refresh()
+
     def advance(self, count):
-        cmd = self.command(); self.last_batch_count=count
+        base = self.command(); self.last_batch_count=count
         try:
             for _ in range(count):
+                cmd=(self.direction_controller.update(self.sim,base,self.joystick.angle_deg,self.joystick.strength)
+                     if self.direction_enabled.isChecked() else base)
                 t0=self.sim.time; self.sim.step(cmd.raw_targets(t0))
                 self.last_consumed_command=Command(**asdict(cmd)); d=self.sim.last_diagnostic
+                self.lesson.record_tick(d)
+                self.impulse.record(d,self.sim.config.mass,self.sim.config.gravity)
                 sample={"t":t0,"target_l":d.targets_rad_s[0],"target_r":d.targets_rad_s[1],
                         "requested_l":d.requested_rad_s[0],"requested_r":d.requested_rad_s[1],
                         "speed_l":d.rotor_speeds_after_rad_s[0],"speed_r":d.rotor_speeds_after_rad_s[1],
@@ -467,6 +623,8 @@ class Window(QMainWindow):
                     self.record_writer.writerow(row)
         except (ValueError,FloatingPointError,RuntimeError,OSError) as exc:
             if self.running: self.toggle_run()
+            self.lesson_ticks_remaining=0
+            self.run_button.setEnabled(True); self.step_button.setEnabled(True)
             if isinstance(exc,OSError): self.finish_record(); self.statusBar().showMessage(f"Recording stopped: {exc}")
             else: QMessageBox.critical(self,"Simulation stopped",str(exc))
             return
@@ -474,7 +632,10 @@ class Window(QMainWindow):
 
     def refresh(self):
         d = self.sim.snapshot()
-        pending = self.command().targets(self.sim.time,self.sim.config.max_speed)
+        preview_command=self.command()
+        if self.direction_enabled.isChecked():
+            preview_command=copy.deepcopy(self.direction_controller).update(self.sim,preview_command,self.joystick.angle_deg,self.joystick.strength)
+        pending = preview_command.targets(self.sim.time,self.sim.config.max_speed)
         diag=self.sim.last_diagnostic
         if diag is None:
             consumed="Consumed tick  —"
@@ -485,6 +646,8 @@ class Window(QMainWindow):
                       f"  speed {diag.rotor_speeds_before_rad_s[0]:+.1f} / {diag.rotor_speeds_before_rad_s[1]:+.1f} rad/s\n"
                       f"  torque {diag.motor_torques_nm[0]:+.3f} / {diag.motor_torques_nm[1]:+.3f} N·m")
         self.time_label.setText(f"t = {self.sim.time:.3f} s")
+        self.robot_label.setText(f'Robot: {self.sim.config.mass/POUNDS_TO_KG:.2f} lb / {self.sim.config.mass:.4f} kg · illustrative {self.preset_name} setup')
+        self.setWindowTitle(f'Droopy Engineering Simulator — {self.sim.config.mass/POUNDS_TO_KG:.2f} lb')
         self.telemetry.setText(
             f"Time  {d['t']:.3f} s\n"
             f"Position  {d['x']:+.3f}, {d['y']:+.3f}, {d['z']:.3f} m\n"
@@ -496,14 +659,35 @@ class Window(QMainWindow):
             f"Mechanical energy  {d['energy']:.2f} J")
         if max(abs(d['roll_deg']),abs(d['pitch_deg'])) > 30:
             self.statusBar().showMessage("Large tilt: feet-only collision model is outside its useful upright range. Reset recommended.")
+        self.motion_view.update_snapshot(self.impulse.snapshot())
+        self.joystick.set_velocity(self.sim.velocity[0],self.sim.velocity[1])
+        if self.direction_enabled.isChecked():
+            state=self.direction_controller.state
+            actual='too slow to measure' if state.travel_angle_deg is None else f'{state.travel_angle_deg:+.1f}°'
+            self.steering_status.setText(
+                f'Pending joystick: {self.joystick.angle_deg:+.1f}° at {self.joystick.strength:.0%}\n'
+                f'Last controller tick: heading error {state.heading_error_deg:+.1f}°\n'
+                f'Bias = base + slew-limit(clip(−0.40 × error, ±45) × strength)\n'
+                f'Applied bias: {state.command_bias:+.2f} rad/s\n'
+                f'Gait amplitude = configured amplitude × strength\n'
+                f'Measured travel: {actual}; speed {state.speed_mps:.3f} m/s\n'
+                'Uses true yaw, assumes nominal body −X travel. Calibration is for 3 lb ONLY; uncalibrated for 9 lb or changed geometry. Centre requests active braking.')
+        else: self.steering_status.setText('Assist off: commands come directly from the open-loop gait controls.')
+        self.lesson.update_state(self.sim,self.last_consumed_command,preview_command)
+        if self.live_math.isChecked():
+            self.inspector_capture=(self.sim.last_diagnostic,replace(self.sim.config),replace(self.last_consumed_command) if self.last_consumed_command else None)
         self.refresh_explanation()
         self.arena.update(); self.trace.update()
 
     def reset(self):
         if self.running: self.toggle_run()
         self.finish_record()
+        self.lesson_ticks_remaining=0; self.run_button.setEnabled(True); self.step_button.setEnabled(True)
+        self.joystick.set_value(180.,0.); self.direction_controller.reset()
         self.enabled.setChecked(False)
         self.sim.reset(); self.last_consumed_command=None; self.last_batch_count=0; self.accumulator = 0.
+        self.inspector_capture=None; self._inspector_render_key=None; self.lesson.reset_history()
+        self.impulse.reset();self.motion_view.reset()
         self.arena.trail.clear(); self.trace.samples.clear(); self.refresh()
 
     def apply_config(self):
@@ -523,7 +707,8 @@ class Window(QMainWindow):
         return True
 
     def open_explanation(self, key):
-        self.side_tabs.setCurrentIndex(1)
+        self.side_tabs.setCurrentIndex(3)
+        self.capture_inspector()
         keys=[item[0] for item in KEYS]
         if key in keys: self.explain_select.setCurrentIndex(keys.index(key))
         self.refresh_explanation()
@@ -531,16 +716,23 @@ class Window(QMainWindow):
     def refresh_explanation(self):
         if not hasattr(self,'explain_select'): return
         key=KEYS[self.explain_select.currentIndex()][0]
-        diag=self.sim.last_diagnostic
-        command=self.last_consumed_command if diag is not None else self.command()
-        demand_time=diag.time_before_s if diag is not None else self.sim.time
+        diag,config,command=self.inspector_capture or (None,self.sim.config,None)
+        render_key=(key,id(diag))
+        if render_key==self._inspector_render_key: return
+        self._inspector_render_key=render_key
+        self.capture_label.setText(f'{"Live" if self.live_math.isChecked() else "Frozen"} calculation: t = {diag.time_before_s:.6f} s' if diag else 'No captured step. Click STEP or Capture current step.')
         pane=self.detail.parentWidget().parentWidget()
         scroll=pane.verticalScrollBar() if isinstance(pane,QScrollArea) else None
         value=scroll.value() if scroll else 0
-        self.detail.setText(explanation(key,diag,self.sim.config,command,demand_time))
+        self.detail.setText(explanation(key,diag,config,command,diag.time_before_s if diag else 0))
         if scroll: scroll.setValue(value)
 
+    def set_speed_magnitude(self, enabled):
+        self.trace.speed_magnitude=bool(enabled)
+        self.trace.update()
+
     def plot_preset(self, keys):
+        self.show_plot.setChecked(True)
         for key,action in self.plot_actions.items(): action.setChecked(key in keys)
 
     def set_plot_window(self, seconds):

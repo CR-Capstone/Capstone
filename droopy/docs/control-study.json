@@ -1,0 +1,3167 @@
+{
+  "schema": "droopy-control-study-v1",
+  "purpose": "bounded comparative evidence; not controller calibration",
+  "model_warning": "illustrative simulator, not a validated digital twin",
+  "reproduce": "/home/Sam/src/Capstone/.venv/bin/python tools/control_study.py --output docs/control-study.json",
+  "trial_count": 23,
+  "invariants": {
+    "no_direct_yaw_force": true,
+    "no_scripted_propulsion": true,
+    "feedback_reads_sim_truth": true,
+    "production_files_changed": false
+  },
+  "trials": [
+    {
+      "name": "default_fixed_+0",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.24166629254853503,
+        "dy_m": 0.01619393464019462,
+        "distance_m": 0.24220825847457186,
+        "travel_angle_deg": 176.1663702824615,
+        "requested_longitudinal_m": 0.22155337995390104,
+        "requested_lateral_m": -0.09787206089731317,
+        "heading_error_deg": -23.833629717538543,
+        "mean_speed_mps": 0.05041279185650307,
+        "final_yaw_deg": 31.1144873595105,
+        "net_unwrapped_yaw_deg": 31.1144873595105,
+        "max_tilt_deg": 3.463058438072392,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.02471641169736705,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.05602905539739675,
+          "dy_m": 0.0028470738636814227,
+          "distance_m": 0.056101344710352635,
+          "travel_angle_deg": 177.09106050316657,
+          "yaw_change_deg": 45.18905151587295,
+          "yaw_peak_to_peak_deg": 102.67077346567282,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 3.463058438072392
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.11210173636660756,
+            "dy_m": 0.006806731751017744,
+            "distance_vector_m": 0.11230819602121074,
+            "travel_angle_deg": 176.5253100618049,
+            "net_body_yaw_deg": -286.36061979778214
+          },
+          "sine_negative": {
+            "dx_m": -0.12956455618192747,
+            "dy_m": 0.009387202889176875,
+            "distance_vector_m": 0.12990417159084003,
+            "travel_angle_deg": 175.85605066755878,
+            "net_body_yaw_deg": 317.4751071572926
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06209399252975814,
+        "later_cycle_mean_yaw_p2p_deg": 83.78947333642297,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.05602905539739675,
+            "dy_m": 0.0028470738636814227,
+            "distance_m": 0.056101344710352635,
+            "travel_angle_deg": 177.09106050316657,
+            "yaw_change_deg": 45.18905151587295,
+            "yaw_peak_to_peak_deg": 102.67077346567282,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 3.463058438072392
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.05368057797412838,
+            "dy_m": 0.0009460954057091933,
+            "distance_m": 0.05368891457417612,
+            "travel_angle_deg": 178.99029287396942,
+            "yaw_change_deg": -10.382113893373877,
+            "yaw_peak_to_peak_deg": 82.88512572811327,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.245216316349836
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.06699574210251709,
+            "dy_m": 0.004862676691803925,
+            "distance_m": 0.06717198139459632,
+            "travel_angle_deg": 175.84864454215392,
+            "yaw_change_deg": -3.188022963311429,
+            "yaw_peak_to_peak_deg": 83.6852907693096,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.43202285776810606
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.06498737568780605,
+            "dy_m": 0.007520566574955371,
+            "distance_m": 0.06542108162050198,
+            "travel_angle_deg": 173.39889453213783,
+            "yaw_change_deg": -0.6192794118501723,
+            "yaw_peak_to_peak_deg": 84.79800351184605,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.39467635674834156
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_fixed_-15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": -15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": -15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.23516781185464566,
+        "dy_m": -0.05376820322781051,
+        "distance_m": 0.2412362315466919,
+        "travel_angle_deg": -167.12139559406393,
+        "requested_longitudinal_m": 0.23937526602051884,
+        "requested_lateral_m": -0.029906544910019255,
+        "heading_error_deg": -7.121395594063927,
+        "mean_speed_mps": 0.05021047591772069,
+        "final_yaw_deg": 58.40235600979547,
+        "net_unwrapped_yaw_deg": 58.40235600979547,
+        "max_tilt_deg": 2.9974667831978703,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.024039962535123322,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.05044364000225795,
+          "dy_m": 0.01238099771921691,
+          "distance_m": 0.051940830963709585,
+          "travel_angle_deg": 166.20980053009825,
+          "yaw_change_deg": 50.58049414254885,
+          "yaw_peak_to_peak_deg": 101.83850284230283,
+          "mean_bias_rad_s": -15.0,
+          "max_tilt_deg": 2.9974667831978703
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.10607378833464753,
+            "dy_m": -0.03868681957483246,
+            "distance_vector_m": 0.11290845221009474,
+            "travel_angle_deg": -159.962272567986,
+            "net_body_yaw_deg": -264.1324543666384
+          },
+          "sine_negative": {
+            "dx_m": -0.12909402351999813,
+            "dy_m": -0.015081383652978043,
+            "distance_vector_m": 0.12997197790858667,
+            "travel_angle_deg": -173.33663633367735,
+            "net_body_yaw_deg": 322.5348103764339
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06541869622156347,
+        "later_cycle_mean_yaw_p2p_deg": 85.65567069625668,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.05044364000225795,
+            "dy_m": 0.01238099771921691,
+            "distance_m": 0.051940830963709585,
+            "travel_angle_deg": 166.20980053009825,
+            "yaw_change_deg": 50.58049414254885,
+            "yaw_peak_to_peak_deg": 101.83850284230283,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 2.9974667831978703
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.06069937613302477,
+            "dy_m": -0.021494052688859823,
+            "distance_m": 0.06439261265028698,
+            "travel_angle_deg": -160.50060703850033,
+            "yaw_change_deg": 6.395246801294697,
+            "yaw_peak_to_peak_deg": 86.5436734699991,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.7339242891096421
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.06254423636566506,
+            "dy_m": -0.022085294741972912,
+            "distance_m": 0.0663290415007182,
+            "travel_angle_deg": -160.55112030914762,
+            "yaw_change_deg": 1.0890039182020388,
+            "yaw_peak_to_peak_deg": 85.3462958588761,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.37958518946521824
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.06152408929926079,
+            "dy_m": -0.02257318194063659,
+            "distance_m": 0.06553443451368522,
+            "travel_angle_deg": -159.85191809637806,
+            "yaw_change_deg": 0.21496138946628207,
+            "yaw_peak_to_peak_deg": 85.07704275989482,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.38809828557950715
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_fixed_+15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.2510754024258568,
+        "dy_m": 0.008566162826256387,
+        "distance_m": 0.251221489623941,
+        "travel_angle_deg": 178.04594688520197,
+        "requested_longitudinal_m": 0.23300390268284274,
+        "requested_lateral_m": -0.09392240511952522,
+        "heading_error_deg": -21.954053114798057,
+        "mean_speed_mps": 0.052288789598072226,
+        "final_yaw_deg": 36.255030440409534,
+        "net_unwrapped_yaw_deg": 36.255030440409534,
+        "max_tilt_deg": 3.7007380814009094,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.025444895410552608,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.06308397539423694,
+          "dy_m": 0.007895695733800655,
+          "distance_m": 0.06357617448904462,
+          "travel_angle_deg": 172.86586331103845,
+          "yaw_change_deg": 30.60868151548173,
+          "yaw_peak_to_peak_deg": 95.97945595423764,
+          "mean_bias_rad_s": 15.0,
+          "max_tilt_deg": 3.7007380814009094
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.11296602790614768,
+            "dy_m": -0.0009388611239693231,
+            "distance_vector_m": 0.11296992927811647,
+            "travel_angle_deg": -179.52382550345806,
+            "net_body_yaw_deg": -282.311038939523
+          },
+          "sine_negative": {
+            "dx_m": -0.13810937451970912,
+            "dy_m": 0.009505023950225708,
+            "distance_vector_m": 0.13843606759266042,
+            "travel_angle_deg": 176.06297284622804,
+            "net_body_yaw_deg": 318.5660693799325
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06270951791994832,
+        "later_cycle_mean_yaw_p2p_deg": 85.02139911160778,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.06308397539423694,
+            "dy_m": 0.007895695733800655,
+            "distance_m": 0.06357617448904462,
+            "travel_angle_deg": 172.86586331103845,
+            "yaw_change_deg": 30.60868151548173,
+            "yaw_peak_to_peak_deg": 95.97945595423764,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 3.7007380814009094
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.056966857172723345,
+            "dy_m": -0.0029078625914646713,
+            "distance_m": 0.057041024543641405,
+            "travel_angle_deg": -177.0778837970633,
+            "yaw_change_deg": 5.113384928725509,
+            "yaw_peak_to_peak_deg": 85.0188030369633,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 1.0395293870166902
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.06555942967689128,
+            "dy_m": 0.002258337666723724,
+            "distance_m": 0.06559831483030792,
+            "travel_angle_deg": 178.02710190783833,
+            "yaw_change_deg": 0.5027213712193586,
+            "yaw_peak_to_peak_deg": 85.11771824218144,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.39474732784580513
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.0654768175933177,
+            "dy_m": 0.0012741894416444782,
+            "distance_m": 0.0654892143858956,
+            "travel_angle_deg": 178.8851555957612,
+            "yaw_change_deg": -0.08975012481820244,
+            "yaw_peak_to_peak_deg": 84.92767605567857,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.3914653062745124
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_fixed_-30",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": -30,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": -30,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.1996265605623137,
+        "dy_m": -0.1313323460342899,
+        "distance_m": 0.2389538633226288,
+        "travel_angle_deg": -146.65947644058966,
+        "requested_longitudinal_m": 0.23250591368722157,
+        "requested_lateral_m": 0.055135731583790815,
+        "heading_error_deg": 13.340523559410343,
+        "mean_speed_mps": 0.04973542789522863,
+        "final_yaw_deg": 77.85144474467494,
+        "net_unwrapped_yaw_deg": 77.85144474467494,
+        "max_tilt_deg": 3.7470166160081333,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.023207409720054115,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.051506796503988816,
+          "dy_m": -0.011488512483067523,
+          "distance_m": 0.05277249288385866,
+          "travel_angle_deg": -167.42608712255478,
+          "yaw_change_deg": 68.8589467383666,
+          "yaw_peak_to_peak_deg": 110.59674622342979,
+          "mean_bias_rad_s": -30.0,
+          "max_tilt_deg": 3.7470166160081333
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.07711673176191505,
+            "dy_m": -0.05877022833211125,
+            "distance_vector_m": 0.09695839342649841,
+            "travel_angle_deg": -142.6891781583534,
+            "net_body_yaw_deg": -266.0999598430198
+          },
+          "sine_negative": {
+            "dx_m": -0.12250982880039865,
+            "dy_m": -0.07256211770217863,
+            "distance_vector_m": 0.14238651297832886,
+            "travel_angle_deg": -149.36189808344295,
+            "net_body_yaw_deg": 343.9514045876947
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06374544958860896,
+        "later_cycle_mean_yaw_p2p_deg": 87.76043730500187,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.051506796503988816,
+            "dy_m": -0.011488512483067523,
+            "distance_m": 0.05277249288385866,
+            "travel_angle_deg": -167.42608712255478,
+            "yaw_change_deg": 68.8589467383666,
+            "yaw_peak_to_peak_deg": 110.59674622342979,
+            "mean_bias_rad_s": -30.0,
+            "max_tilt_deg": 3.7470166160081333
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.05600310376139346,
+            "dy_m": -0.03673837763150654,
+            "distance_m": 0.06697802641094004,
+            "travel_angle_deg": -146.73488094739548,
+            "yaw_change_deg": 12.302363488075443,
+            "yaw_peak_to_peak_deg": 96.42964844794894,
+            "mean_bias_rad_s": -30.0,
+            "max_tilt_deg": 3.685499053373568
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.04037227455545986,
+            "dy_m": -0.040684343077971474,
+            "distance_m": 0.057316108769415924,
+            "travel_angle_deg": -134.77941195379012,
+            "yaw_change_deg": -2.958406104840833,
+            "yaw_peak_to_peak_deg": 81.94867256518457,
+            "mean_bias_rad_s": -30.0,
+            "max_tilt_deg": 3.1486483945778216
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.051758666195368924,
+            "dy_m": -0.042453509082279434,
+            "distance_m": 0.06694221358547092,
+            "travel_angle_deg": -140.64070055235283,
+            "yaw_change_deg": -0.4540484561533873,
+            "yaw_peak_to_peak_deg": 84.9029909018721,
+            "mean_bias_rad_s": -30.0,
+            "max_tilt_deg": 0.4048654332753561
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_fixed_+30",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 30,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 30,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.20601946567519736,
+        "dy_m": 0.1385110393413369,
+        "distance_m": 0.24825254934544216,
+        "travel_angle_deg": 146.0862641696785,
+        "requested_longitudinal_m": 0.14622140610552728,
+        "requested_lateral_m": -0.20062060874454968,
+        "heading_error_deg": -53.913735830321514,
+        "mean_speed_mps": 0.0516708397014131,
+        "final_yaw_deg": -9.639906643408644,
+        "net_unwrapped_yaw_deg": -9.639906643408644,
+        "max_tilt_deg": 4.149967082672754,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.026069310021854513,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.06470366366469957,
+          "dy_m": 0.019202697878114506,
+          "distance_m": 0.06749301962005187,
+          "travel_angle_deg": 163.4702096070418,
+          "yaw_change_deg": 20.05931408404755,
+          "yaw_peak_to_peak_deg": 92.60933880630675,
+          "mean_bias_rad_s": 30.0,
+          "max_tilt_deg": 4.149967082672754
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.10964279978333569,
+            "dy_m": 0.06001027790932821,
+            "distance_vector_m": 0.12499110768004035,
+            "travel_angle_deg": 151.30699687639148,
+            "net_body_yaw_deg": -314.50663799017366
+          },
+          "sine_negative": {
+            "dx_m": -0.09637666589186167,
+            "dy_m": 0.07850076143200871,
+            "distance_vector_m": 0.12430137277535062,
+            "travel_angle_deg": 140.83648106508755,
+            "net_body_yaw_deg": 304.866731346765
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06181033939403189,
+        "later_cycle_mean_yaw_p2p_deg": 86.68515982501964,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.06470366366469957,
+            "dy_m": 0.019202697878114506,
+            "distance_m": 0.06749301962005187,
+            "travel_angle_deg": 163.4702096070418,
+            "yaw_change_deg": 20.05931408404755,
+            "yaw_peak_to_peak_deg": 92.60933880630675,
+            "mean_bias_rad_s": 30.0,
+            "max_tilt_deg": 4.149967082672754
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.04622308514553379,
+            "dy_m": 0.033436231497358845,
+            "distance_m": 0.057048708811998874,
+            "travel_angle_deg": 144.11928271115562,
+            "yaw_change_deg": -22.251389087365464,
+            "yaw_peak_to_peak_deg": 92.48072859008914,
+            "mean_bias_rad_s": 30.0,
+            "max_tilt_deg": 2.3194167672353405
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.04962873677326046,
+            "dy_m": 0.039686344386450106,
+            "distance_m": 0.06354539672131644,
+            "travel_angle_deg": 141.35191103465064,
+            "yaw_change_deg": -5.71685641398096,
+            "yaw_peak_to_peak_deg": 83.39418136396407,
+            "mean_bias_rad_s": 30.0,
+            "max_tilt_deg": 0.8131960050539869
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.04550627879747035,
+            "dy_m": 0.046184454439047715,
+            "distance_m": 0.06483691264878036,
+            "travel_angle_deg": 134.57622878428393,
+            "yaw_change_deg": -1.8558665983922387,
+            "yaw_peak_to_peak_deg": 84.1805695210057,
+            "mean_bias_rad_s": 30.0,
+            "max_tilt_deg": 0.48761688392872926
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_instant_request_-160",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "instant",
+        "requested_angle_deg": -160,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.21132906674428822,
+        "dy_m": -0.025382747910223876,
+        "distance_m": 0.21284797002199904,
+        "travel_angle_deg": -173.15100993817694,
+        "requested_longitudinal_m": 0.20726577565543444,
+        "requested_lateral_m": -0.048426816790255,
+        "heading_error_deg": -13.15100993817694,
+        "mean_speed_mps": 0.04430179415589479,
+        "final_yaw_deg": 43.02285823376085,
+        "net_unwrapped_yaw_deg": 43.02285823376085,
+        "max_tilt_deg": 2.3312460091058456,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.024039962535123322,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.04202336544326303,
+          "dy_m": 0.0015010077788743781,
+          "distance_m": 0.04205016370396523,
+          "travel_angle_deg": 177.95435553198348,
+          "yaw_change_deg": 39.41287849991051,
+          "yaw_peak_to_peak_deg": 90.29376615354477,
+          "mean_bias_rad_s": -10.31603983096058,
+          "max_tilt_deg": 2.3312460091058456
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.09995088531872973,
+            "dy_m": -0.011892054290882349,
+            "distance_vector_m": 0.10065585145064918,
+            "travel_angle_deg": -173.21490328084968,
+            "net_body_yaw_deg": -231.18777553398675
+          },
+          "sine_negative": {
+            "dx_m": -0.1113781814255585,
+            "dy_m": -0.013490693619341526,
+            "distance_vector_m": 0.11219223730720217,
+            "travel_angle_deg": -173.09368655553402,
+            "net_body_yaw_deg": 274.2106337677476
+          }
+        },
+        "later_cycle_mean_distance_m": 0.057177233989675676,
+        "later_cycle_mean_yaw_p2p_deg": 78.3735411329168,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.04202336544326303,
+            "dy_m": 0.0015010077788743781,
+            "distance_m": 0.04205016370396523,
+            "travel_angle_deg": 177.95435553198348,
+            "yaw_change_deg": 39.41287849991051,
+            "yaw_peak_to_peak_deg": 90.29376615354477,
+            "mean_bias_rad_s": -10.31603983096058,
+            "max_tilt_deg": 2.3312460091058456
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.05523487584353192,
+            "dy_m": -0.006066954695687573,
+            "distance_m": 0.05556707162276875,
+            "travel_angle_deg": -173.73180456033208,
+            "yaw_change_deg": 3.3360440563740994,
+            "yaw_peak_to_peak_deg": 78.8229334904995,
+            "mean_bias_rad_s": -4.267045380152285,
+            "max_tilt_deg": 0.3224122163413877
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.0570634806868171,
+            "dy_m": -0.010261081464741176,
+            "distance_m": 0.05797870834125924,
+            "travel_angle_deg": -169.80608778606228,
+            "yaw_change_deg": 0.15941615783281549,
+            "yaw_peak_to_peak_deg": 78.16801769047623,
+            "mean_bias_rad_s": -3.8012761562689557,
+            "max_tilt_deg": 0.3145408613601778
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.05701071126592658,
+            "dy_m": -0.01058989857000464,
+            "distance_m": 0.05798592200499906,
+            "travel_angle_deg": -169.47708322453838,
+            "yaw_change_deg": -0.03127270154542572,
+            "yaw_peak_to_peak_deg": 78.12967221777465,
+            "mean_bias_rad_s": -3.773703604245411,
+            "max_tilt_deg": 0.3007982905995968
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_instant_request_+160",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804500000000057,
+        "dt_s": 0.0005,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "instant",
+        "requested_angle_deg": 160,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.21683432679198192,
+        "dy_m": 0.03893508137186033,
+        "distance_m": 0.22030221477952824,
+        "travel_angle_deg": 169.82036785235144,
+        "requested_longitudinal_m": 0.21707419893070584,
+        "requested_lateral_m": 0.037574698872482555,
+        "heading_error_deg": 9.820367852351438,
+        "mean_speed_mps": 0.045853307270168724,
+        "final_yaw_deg": 23.206895076981596,
+        "net_unwrapped_yaw_deg": 23.206895076981596,
+        "max_tilt_deg": 3.55393140637029,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.024976584452076178,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.051316467321373,
+          "dy_m": 0.0019250346433876615,
+          "distance_m": 0.051352561540041856,
+          "travel_angle_deg": 177.8516707675893,
+          "yaw_change_deg": 34.15836930018115,
+          "yaw_peak_to_peak_deg": 90.73870702713327,
+          "mean_bias_rad_s": 2.607503308325141,
+          "max_tilt_deg": 3.55393140637029
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.10612908287538814,
+            "dy_m": 0.018650226509352746,
+            "distance_vector_m": 0.1077553394538812,
+            "travel_angle_deg": 170.03309122216896,
+            "net_body_yaw_deg": -256.42574612706886
+          },
+          "sine_negative": {
+            "dx_m": -0.11070524391659378,
+            "dy_m": 0.020284854862507584,
+            "distance_vector_m": 0.11254832902991284,
+            "travel_angle_deg": 169.61670357112865,
+            "net_body_yaw_deg": 279.6326412040504
+          }
+        },
+        "later_cycle_mean_distance_m": 0.05659592675130936,
+        "later_cycle_mean_yaw_p2p_deg": 79.8659672162693,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.051316467321373,
+            "dy_m": 0.0019250346433876615,
+            "distance_m": 0.051352561540041856,
+            "travel_angle_deg": 177.8516707675893,
+            "yaw_change_deg": 34.15836930018115,
+            "yaw_peak_to_peak_deg": 90.73870702713327,
+            "mean_bias_rad_s": 2.607503308325141,
+            "max_tilt_deg": 3.55393140637029
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.05043727467891978,
+            "dy_m": 0.014450055138256384,
+            "distance_m": 0.052466396584246684,
+            "travel_angle_deg": 164.01322744158696,
+            "yaw_change_deg": -11.708453185684057,
+            "yaw_peak_to_peak_deg": 83.23888867974844,
+            "mean_bias_rad_s": 5.014557373769972,
+            "max_tilt_deg": 3.339802719671268
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.057980045011011574,
+            "dy_m": 0.013135661189550885,
+            "distance_m": 0.05944940045421486,
+            "travel_angle_deg": 167.23485039028841,
+            "yaw_change_deg": 0.6222922035719911,
+            "yaw_peak_to_peak_deg": 78.22874786668937,
+            "mean_bias_rad_s": 4.220323461277401,
+            "max_tilt_deg": 0.3345033629791037
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.05710295013100061,
+            "dy_m": 0.009403165830064703,
+            "distance_m": 0.05787198321546653,
+            "travel_angle_deg": 170.64899986947432,
+            "yaw_change_deg": -0.006665163969849175,
+            "yaw_peak_to_peak_deg": 78.13026510237009,
+            "mean_bias_rad_s": 4.300425147904244,
+            "max_tilt_deg": 0.31464735607013883
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_open",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.0664951856494992,
+        "dy_m": 0.018199128181440365,
+        "distance_m": 0.06894068451303527,
+        "travel_angle_deg": 164.69350367426048,
+        "requested_longitudinal_m": 0.056260566843604976,
+        "requested_lateral_m": -0.039844279383145054,
+        "heading_error_deg": -35.306496325739545,
+        "mean_speed_mps": 0.011479591126973984,
+        "final_yaw_deg": -4.9327039582598875,
+        "net_unwrapped_yaw_deg": -4.9327039582598875,
+        "max_tilt_deg": 2.6334844660144414,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017733744067937724,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016672935490155905,
+          "dy_m": 0.0013264986292001357,
+          "distance_m": 0.01672562036135492,
+          "travel_angle_deg": 175.45112984309705,
+          "yaw_change_deg": -4.949444882260613,
+          "yaw_peak_to_peak_deg": 42.83497782560892,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.6334844660144414
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03277270104758645,
+            "dy_m": 0.007657744594713021,
+            "distance_vector_m": 0.033655474832964855,
+            "travel_angle_deg": 166.84810398002224,
+            "net_body_yaw_deg": -116.6064464115355
+          },
+          "sine_negative": {
+            "dx_m": -0.03372248460191275,
+            "dy_m": 0.010541383586727343,
+            "distance_vector_m": 0.03533166760356447,
+            "travel_angle_deg": 162.64116600306585,
+            "net_body_yaw_deg": 111.6737424532756
+          }
+        },
+        "later_cycle_mean_distance_m": 0.01753850860579508,
+        "later_cycle_mean_yaw_p2p_deg": 42.903850934081426,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016672935490155905,
+            "dy_m": 0.0013264986292001357,
+            "distance_m": 0.01672562036135492,
+            "travel_angle_deg": 175.45112984309705,
+            "yaw_change_deg": -4.949444882260613,
+            "yaw_peak_to_peak_deg": 42.83497782560892,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.6334844660144414
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.016623379623207226,
+            "dy_m": 0.005616670102431377,
+            "distance_m": 0.017546616002432142,
+            "travel_angle_deg": 161.33103322324646,
+            "yaw_change_deg": -0.02129737769487061,
+            "yaw_peak_to_peak_deg": 42.90443863047778,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.10917475352358423
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.01660390082162916,
+            "dy_m": 0.005629210861077919,
+            "distance_m": 0.017532185756858016,
+            "travel_angle_deg": 161.27182926650843,
+            "yaw_change_deg": -0.011254005601922579,
+            "yaw_peak_to_peak_deg": 42.9035574068956,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.1091898573287891
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.016608328410173186,
+            "dy_m": 0.005630285792888755,
+            "distance_m": 0.017536724058095077,
+            "travel_angle_deg": 161.27314786236448,
+            "yaw_change_deg": -0.04153774782685016,
+            "yaw_peak_to_peak_deg": 42.9035567648709,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.10918984571623071
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_fixed_-15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": -15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": -15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.06918645224077417,
+        "dy_m": 0.0012725728725173152,
+        "distance_m": 0.06919815471080708,
+        "travel_angle_deg": 178.9462556402008,
+        "requested_longitudinal_m": 0.06457875307276144,
+        "requested_lateral_m": -0.024858987649300977,
+        "heading_error_deg": -21.053744359799225,
+        "mean_speed_mps": 0.011522463526902688,
+        "final_yaw_deg": 12.122818750745104,
+        "net_unwrapped_yaw_deg": 12.122818750745104,
+        "max_tilt_deg": 2.8554832086212554,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017359087503122136,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016620832612478553,
+          "dy_m": -0.0002612037829234994,
+          "distance_m": 0.016622884952626128,
+          "travel_angle_deg": -179.09964543779878,
+          "yaw_change_deg": 12.011590978484294,
+          "yaw_peak_to_peak_deg": 48.89325273415531,
+          "mean_bias_rad_s": -15.0,
+          "max_tilt_deg": 2.8554832086212554
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03142421617667332,
+            "dy_m": 0.001108689057130852,
+            "distance_vector_m": 0.031443768122534216,
+            "travel_angle_deg": 177.97936515818736,
+            "net_body_yaw_deg": -104.04874216648531
+          },
+          "sine_negative": {
+            "dx_m": -0.037762236064100854,
+            "dy_m": 0.00016388381538646291,
+            "distance_vector_m": 0.0377625916809986,
+            "travel_angle_deg": 179.751344385818,
+            "net_body_yaw_deg": 116.17156091723041
+          }
+        },
+        "later_cycle_mean_distance_m": 0.01753392352812692,
+        "later_cycle_mean_yaw_p2p_deg": 42.90583707714362,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016620832612478553,
+            "dy_m": -0.0002612037829234994,
+            "distance_m": 0.016622884952626128,
+            "travel_angle_deg": -179.09964543779878,
+            "yaw_change_deg": 12.011590978484294,
+            "yaw_peak_to_peak_deg": 48.89325273415531,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 2.8554832086212554
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.017525601654988326,
+            "dy_m": 0.0005018122737114967,
+            "distance_m": 0.01753278440315106,
+            "travel_angle_deg": 178.3598924355589,
+            "yaw_change_deg": 0.07081920094825023,
+            "yaw_peak_to_peak_deg": 42.90915346158796,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.10921633825302093
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.01752461583523824,
+            "dy_m": 0.000516237906430173,
+            "distance_m": 0.017532217821733743,
+            "travel_angle_deg": 178.3126761623356,
+            "yaw_change_deg": -0.010000888010923248,
+            "yaw_peak_to_peak_deg": 42.904179838743694,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.10924386749560003
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.01752918708884544,
+            "dy_m": 0.0005156011044137323,
+            "distance_m": 0.01753676835949595,
+            "travel_angle_deg": 178.3151955728093,
+            "yaw_change_deg": -0.04031165876870624,
+            "yaw_peak_to_peak_deg": 42.90417793109921,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.10924390199576411
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_fixed_+15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.06737176791879276,
+        "dy_m": 0.02713343405761012,
+        "distance_m": 0.07263042307643781,
+        "travel_angle_deg": 158.063288086806,
+        "requested_longitudinal_m": 0.05402857215728896,
+        "requested_lateral_m": -0.04853958948020648,
+        "heading_error_deg": -41.93671191319402,
+        "mean_speed_mps": 0.012093984360410487,
+        "final_yaw_deg": -13.031406416717864,
+        "net_unwrapped_yaw_deg": -13.031406416717864,
+        "max_tilt_deg": 2.355278327576833,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.018191657647156773,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.020438080438202322,
+          "dy_m": 0.003383220466143435,
+          "distance_m": 0.020716208936988452,
+          "travel_angle_deg": 170.60076894791857,
+          "yaw_change_deg": -13.111095477558667,
+          "yaw_peak_to_peak_deg": 50.942886134853104,
+          "mean_bias_rad_s": 15.0,
+          "max_tilt_deg": 2.355278327576833
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03550321765487925,
+            "dy_m": 0.010955387297171895,
+            "distance_vector_m": 0.03715506660848242,
+            "travel_angle_deg": 162.85110862846852,
+            "net_body_yaw_deg": -127.76335643836316
+          },
+          "sine_negative": {
+            "dx_m": -0.03186855026391351,
+            "dy_m": 0.016178046760438224,
+            "distance_vector_m": 0.03573980544024418,
+            "travel_angle_deg": 153.08540527146403,
+            "net_body_yaw_deg": 114.7319500216453
+          }
+        },
+        "later_cycle_mean_distance_m": 0.01753804820787509,
+        "later_cycle_mean_yaw_p2p_deg": 42.90422231072844,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.020438080438202322,
+            "dy_m": 0.003383220466143435,
+            "distance_m": 0.020716208936988452,
+            "travel_angle_deg": 170.60076894791857,
+            "yaw_change_deg": -13.111095477558667,
+            "yaw_peak_to_peak_deg": 50.942886134853104,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 2.355278327576833
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.01564705731047238,
+            "dy_m": 0.007937362087317264,
+            "distance_m": 0.017545145179860683,
+            "travel_angle_deg": 153.1024555007631,
+            "yaw_change_deg": 0.044156237947150956,
+            "yaw_peak_to_peak_deg": 42.90676160080434,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.10910933957828267
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.015647328364676492,
+            "dy_m": 0.007908227868503103,
+            "distance_m": 0.017532226127111715,
+            "travel_angle_deg": 153.18776740715742,
+            "yaw_change_deg": -0.012461794496424261,
+            "yaw_peak_to_peak_deg": 42.902953427340385,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.10924400205985693
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.01565140637352204,
+            "dy_m": 0.007910240002082222,
+            "distance_m": 0.01753677331665287,
+            "travel_angle_deg": 153.1879100245021,
+            "yaw_change_deg": -0.042763772197655925,
+            "yaw_peak_to_peak_deg": 42.9029519040406,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.10924379804818131
+          }
+        ]
+      }
+    },
+    {
+      "name": "slow_open",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 7.391499999998623,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.65,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.5411925377754785,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.030500326976208254,
+        "dy_m": 0.009747006347940406,
+        "distance_m": 0.03201990128658125,
+        "travel_angle_deg": 162.27765111334696,
+        "requested_longitudinal_m": 0.02532725968298149,
+        "requested_lateral_m": -0.019590916143795517,
+        "heading_error_deg": -37.72234888665304,
+        "mean_speed_mps": 0.004331989621401233,
+        "final_yaw_deg": -15.982368844747414,
+        "net_unwrapped_yaw_deg": -15.982368844747414,
+        "max_tilt_deg": 2.769773241260513,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.014104038422512346,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.010322883559483707,
+          "dy_m": 0.0011423299799331937,
+          "distance_m": 0.01038589633906064,
+          "travel_angle_deg": 173.6853428008147,
+          "yaw_change_deg": -15.974150734946804,
+          "yaw_peak_to_peak_deg": 37.961093136202,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.769773241260513
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.016848696812041947,
+            "dy_m": 0.00415001294050299,
+            "distance_vector_m": 0.017352267623295083,
+            "travel_angle_deg": 166.16288008220735,
+            "net_body_yaw_deg": -73.33888753242582
+          },
+          "sine_negative": {
+            "dx_m": -0.013651630164166307,
+            "dy_m": 0.005596993407437415,
+            "distance_vector_m": 0.014754434633088226,
+            "travel_angle_deg": 157.70699947521882,
+            "net_body_yaw_deg": 57.3565186876784
+          }
+        },
+        "later_cycle_mean_distance_m": 0.007314281877535057,
+        "later_cycle_mean_yaw_p2p_deg": 30.12565369818172,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.010322883559483707,
+            "dy_m": 0.0011423299799331937,
+            "distance_m": 0.01038589633906064,
+            "travel_angle_deg": 173.6853428008147,
+            "yaw_change_deg": -15.974150734946804,
+            "yaw_peak_to_peak_deg": 37.961093136202,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.769773241260513
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.006729004901405659,
+            "dy_m": 0.0028693485628709355,
+            "distance_m": 0.007315235344019417,
+            "travel_angle_deg": 156.9058734249536,
+            "yaw_change_deg": -0.03226202381995691,
+            "yaw_peak_to_peak_deg": 30.125655180914354,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.06658002218460918
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.006726469848554052,
+            "dy_m": 0.002868560936947066,
+            "distance_m": 0.007312594510328424,
+            "travel_angle_deg": 156.90375909614104,
+            "yaw_change_deg": -0.010142061359223575,
+            "yaw_peak_to_peak_deg": 30.12565125590043,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.06655752768417977
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.006728720527247767,
+            "dy_m": 0.0028694556804990485,
+            "distance_m": 0.007315015778257332,
+            "travel_angle_deg": 156.90422796947854,
+            "yaw_change_deg": -0.03230617176883577,
+            "yaw_peak_to_peak_deg": 30.125654657730372,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.06655755384272376
+          }
+        ]
+      }
+    },
+    {
+      "name": "slow_fixed_-15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 7.391499999998623,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.65,
+        "fixed_bias_rad_s": -15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.5411925377754785,
+          "bias": -15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.03135779276673277,
+        "dy_m": 0.003125225047039359,
+        "distance_m": 0.03151314327064186,
+        "travel_angle_deg": 174.30850085592817,
+        "requested_longitudinal_m": 0.028397796548519143,
+        "requested_lateral_m": -0.013661747691452744,
+        "heading_error_deg": -25.691499144071827,
+        "mean_speed_mps": 0.004263430057586109,
+        "final_yaw_deg": -0.1349611541955396,
+        "net_unwrapped_yaw_deg": -0.1349611541955396,
+        "max_tilt_deg": 2.959869776547835,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.013799634715551647,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.00959820600958164,
+          "dy_m": 0.0003539844879440769,
+          "distance_m": 0.009604731314309327,
+          "travel_angle_deg": 177.887873090135,
+          "yaw_change_deg": -0.12823216707934715,
+          "yaw_peak_to_peak_deg": 34.03843104257358,
+          "mean_bias_rad_s": -15.0,
+          "max_tilt_deg": 2.959869776547835
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.015962256569522208,
+            "dy_m": 0.0017392432178758804,
+            "distance_vector_m": 0.016056730730823823,
+            "travel_angle_deg": 173.7815984701059,
+            "net_body_yaw_deg": -59.94513166520905
+          },
+          "sine_negative": {
+            "dx_m": -0.015395536197210565,
+            "dy_m": 0.0013859818291634789,
+            "distance_vector_m": 0.015457796752137482,
+            "travel_angle_deg": 174.85581942185772,
+            "net_body_yaw_deg": 59.81017051101351
+          }
+        },
+        "later_cycle_mean_distance_m": 0.007314198185170516,
+        "later_cycle_mean_yaw_p2p_deg": 30.12584200210452,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.00959820600958164,
+            "dy_m": 0.0003539844879440769,
+            "distance_m": 0.009604731314309327,
+            "travel_angle_deg": 177.887873090135,
+            "yaw_change_deg": -0.12823216707934715,
+            "yaw_peak_to_peak_deg": 34.03843104257358,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 2.959869776547835
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.00725625441528693,
+            "dy_m": 0.0009248642573709545,
+            "distance_m": 0.007314957418463446,
+            "travel_angle_deg": 172.73638605101672,
+            "yaw_change_deg": -0.03151465393099419,
+            "yaw_peak_to_peak_deg": 30.125844222896767,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.0665569282964131
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.007254064716412198,
+            "dy_m": 0.0009234603472159141,
+            "distance_m": 0.00731260787426596,
+            "travel_angle_deg": 172.74512849269888,
+            "yaw_change_deg": -0.00977097873432152,
+            "yaw_peak_to_peak_deg": 30.12583916869938,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.06655777530557196
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.007256479948629827,
+            "dy_m": 0.0009236622058373489,
+            "distance_m": 0.007315029262782142,
+            "travel_angle_deg": 172.7459490444064,
+            "yaw_change_deg": -0.031935011878454406,
+            "yaw_peak_to_peak_deg": 30.125842614717417,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.06655782193298225
+          }
+        ]
+      }
+    },
+    {
+      "name": "slow_fixed_+15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 7.391499999998623,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.65,
+        "fixed_bias_rad_s": 15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.5411925377754785,
+          "bias": 15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.03064954933314019,
+        "dy_m": 0.01330309145372412,
+        "distance_m": 0.033412080398423895,
+        "travel_angle_deg": 156.53728919263764,
+        "requested_longitudinal_m": 0.02425123009308829,
+        "requested_lateral_m": -0.022983580128492404,
+        "heading_error_deg": -43.46271080736233,
+        "mean_speed_mps": 0.004520338280244892,
+        "final_yaw_deg": -29.048935773386322,
+        "net_unwrapped_yaw_deg": -29.048935773386322,
+        "max_tilt_deg": 2.5206296824025873,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.014374619495366298,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.012938625688752389,
+          "dy_m": 0.0003609503654019205,
+          "distance_m": 0.012943659447000566,
+          "travel_angle_deg": 178.4020273420513,
+          "yaw_change_deg": -29.03960453041148,
+          "yaw_peak_to_peak_deg": 50.357257460887396,
+          "mean_bias_rad_s": 15.0,
+          "max_tilt_deg": 2.5206296824025873
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.018597608808181374,
+            "dy_m": 0.004962104883191748,
+            "distance_vector_m": 0.019248208702472572,
+            "travel_angle_deg": 165.06069481776848,
+            "net_body_yaw_deg": -86.24114918385932
+          },
+          "sine_negative": {
+            "dx_m": -0.012051940524958817,
+            "dy_m": 0.008340986570532373,
+            "distance_vector_m": 0.014656784346743524,
+            "travel_angle_deg": 145.31341059648767,
+            "net_body_yaw_deg": 57.192213410472995
+          }
+        },
+        "later_cycle_mean_distance_m": 0.0073143272615115796,
+        "later_cycle_mean_yaw_p2p_deg": 30.125470573901847,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.012938625688752389,
+            "dy_m": 0.0003609503654019205,
+            "distance_m": 0.012943659447000566,
+            "travel_angle_deg": 178.4020273420513,
+            "yaw_change_deg": -29.03960453041148,
+            "yaw_peak_to_peak_deg": 50.357257460887396,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 2.5206296824025873
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.0059064474129086764,
+            "dy_m": 0.004316032478448193,
+            "distance_m": 0.007315343969799045,
+            "travel_angle_deg": 143.843190308689,
+            "yaw_change_deg": -0.03263307709550389,
+            "yaw_peak_to_peak_deg": 30.125471982253554,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.06655779619071316
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.005904241410708909,
+            "dy_m": 0.004314414597968829,
+            "distance_m": 0.007312608286999684,
+            "travel_angle_deg": 143.84322752692256,
+            "yaw_change_deg": -0.010513140083887151,
+            "yaw_peak_to_peak_deg": 30.12546819095221,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.06655780864294156
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.0059062051303307266,
+            "dy_m": 0.004315831084519493,
+            "distance_m": 0.007315029527736009,
+            "travel_angle_deg": 143.84334430157756,
+            "yaw_change_deg": -0.032677322749730564,
+            "yaw_peak_to_peak_deg": 30.125471548499778,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.06655781574520098
+          }
+        ]
+      }
+    },
+    {
+      "name": "low_open",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.6,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 89.92122166115642,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.021111282145099393,
+        "dy_m": 0.0017853137625520497,
+        "distance_m": 0.021186636803436975,
+        "travel_angle_deg": 175.16617996440584,
+        "requested_longitudinal_m": 0.01922750277812986,
+        "requested_lateral_m": -0.008898129913513214,
+        "heading_error_deg": -24.833820035594158,
+        "mean_speed_mps": 0.0035278722510097616,
+        "final_yaw_deg": -6.571093216526269,
+        "net_unwrapped_yaw_deg": -6.571093216526269,
+        "max_tilt_deg": 2.7861181400269324,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017317458995920406,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.00794322334974734,
+          "dy_m": -0.0009552596979107062,
+          "distance_m": 0.008000457379076762,
+          "travel_angle_deg": -173.14248715691997,
+          "yaw_change_deg": -6.5703936488075065,
+          "yaw_peak_to_peak_deg": 26.324834062950227,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.7861181400269324
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.011019941415745318,
+            "dy_m": -0.00033880385400021325,
+            "distance_vector_m": 0.01102514838258172,
+            "travel_angle_deg": -178.23901803424903,
+            "net_body_yaw_deg": -51.429949920883224
+          },
+          "sine_negative": {
+            "dx_m": -0.010091340729354074,
+            "dy_m": 0.002124117616552263,
+            "distance_vector_m": 0.010312469799464534,
+            "travel_angle_deg": 168.11338167458558,
+            "net_body_yaw_deg": 44.85885670435696
+          }
+        },
+        "later_cycle_mean_distance_m": 0.004485171261243205,
+        "later_cycle_mean_yaw_p2p_deg": 21.67760204532068,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.00794322334974734,
+            "dy_m": -0.0009552596979107062,
+            "distance_m": 0.008000457379076762,
+            "travel_angle_deg": -173.14248715691997,
+            "yaw_change_deg": -6.5703936488075065,
+            "yaw_peak_to_peak_deg": 26.324834062950227,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.7861181400269324
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.004391309056985959,
+            "dy_m": 0.0009147652260717397,
+            "distance_m": 0.004485575844058039,
+            "travel_angle_deg": 168.23284685169213,
+            "yaw_change_deg": -0.024935533733441595,
+            "yaw_peak_to_peak_deg": 21.677607976144426,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.0575663382508448
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.004390088094301168,
+            "dy_m": 0.000913337280112095,
+            "distance_m": 0.004484089479812755,
+            "travel_angle_deg": 168.2475275171595,
+            "yaw_change_deg": -0.0071706049134165895,
+            "yaw_peak_to_peak_deg": 21.677600437694934,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.05756950332742543
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.0043917949243363515,
+            "dy_m": 0.0009137689792235364,
+            "distance_m": 0.004485848459858822,
+            "travel_angle_deg": 168.24656963503162,
+            "yaw_change_deg": -0.026452862571166413,
+            "yaw_peak_to_peak_deg": 21.677597722122663,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.057569518078340084
+          }
+        ]
+      }
+    },
+    {
+      "name": "low_fixed_-15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.6,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": -15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 89.92122166115642,
+          "frequency": 0.6660831234159735,
+          "bias": -15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.02146621775176799,
+        "dy_m": -0.0030026138822008036,
+        "distance_m": 0.02167519768518627,
+        "travel_angle_deg": -172.0373441922779,
+        "requested_longitudinal_m": 0.021198600847861817,
+        "requested_lateral_m": -0.004520344763946282,
+        "heading_error_deg": -12.037344192277914,
+        "mean_speed_mps": 0.0036092244917473094,
+        "final_yaw_deg": 12.90826620652464,
+        "net_unwrapped_yaw_deg": 12.90826620652464,
+        "max_tilt_deg": 2.9724943006442257,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.016942802431104822,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.008152502167504044,
+          "dy_m": -0.00118611237985131,
+          "distance_m": 0.00823833442928816,
+          "travel_angle_deg": -171.72208456800362,
+          "yaw_change_deg": 12.902121446225976,
+          "yaw_peak_to_peak_deg": 35.52682105149296,
+          "mean_bias_rad_s": -15.0,
+          "max_tilt_deg": 2.9724943006442257
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.010579336655098404,
+            "dy_m": -0.0006100312200372391,
+            "distance_vector_m": 0.010596910028462487,
+            "travel_angle_deg": -176.6998353294674,
+            "net_body_yaw_deg": -40.17847260946277
+          },
+          "sine_negative": {
+            "dx_m": -0.010886881096669587,
+            "dy_m": -0.0023925826621635643,
+            "distance_vector_m": 0.011146687032850041,
+            "travel_angle_deg": -167.60528827272873,
+            "net_body_yaw_deg": 53.08673881598742
+          }
+        },
+        "later_cycle_mean_distance_m": 0.00448083483563818,
+        "later_cycle_mean_yaw_p2p_deg": 21.677668434605593,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.008152502167504044,
+            "dy_m": -0.00118611237985131,
+            "distance_m": 0.00823833442928816,
+            "travel_angle_deg": -171.72208456800362,
+            "yaw_change_deg": 12.902121446225976,
+            "yaw_peak_to_peak_deg": 35.52682105149296,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 2.9724943006442257
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.00443041493522138,
+            "dy_m": -0.0006124400058393285,
+            "distance_m": 0.004472545053879853,
+            "travel_angle_deg": -172.12957634302535,
+            "yaw_change_deg": -0.018266164500928994,
+            "yaw_peak_to_peak_deg": 21.67771170448531,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.05909148781779406
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.00444346562128704,
+            "dy_m": -0.0006023066121559465,
+            "distance_m": 0.004484100799782113,
+            "travel_angle_deg": -172.28067109354987,
+            "yaw_change_deg": -0.00707862374467183,
+            "yaw_peak_to_peak_deg": 21.677648156776133,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.05757260759627691
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.00444521681864855,
+            "dy_m": -0.0006024743083028841,
+            "distance_m": 0.0044858586532525715,
+            "travel_angle_deg": -172.28155297581526,
+            "yaw_change_deg": -0.026360827724385416,
+            "yaw_peak_to_peak_deg": 21.67764544255533,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.05757251496797352
+          }
+        ]
+      }
+    },
+    {
+      "name": "low_fixed_+15",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.6,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 89.92122166115642,
+          "frequency": 0.6660831234159735,
+          "bias": 15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.021472639739122987,
+        "dy_m": 0.004733291409945013,
+        "distance_m": 0.021988140097280236,
+        "travel_angle_deg": 167.56888675957254,
+        "requested_longitudinal_m": 0.01855880010521657,
+        "requested_lateral_m": -0.011791914331109954,
+        "heading_error_deg": -32.431113240427464,
+        "mean_speed_mps": 0.0036613337935696385,
+        "final_yaw_deg": -20.90258521803484,
+        "net_unwrapped_yaw_deg": -20.90258521803484,
+        "max_tilt_deg": 2.5407797088967494,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.01760885854633253,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.009394730976302699,
+          "dy_m": -0.0011799261281828731,
+          "distance_m": 0.009468537151274747,
+          "travel_angle_deg": -172.84145027398483,
+          "yaw_change_deg": -20.900341157635737,
+          "yaw_peak_to_peak_deg": 36.76975811538268,
+          "mean_bias_rad_s": 15.0,
+          "max_tilt_deg": 2.5407797088967494
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.013395098152338051,
+            "dy_m": 0.00046644269012176514,
+            "distance_vector_m": 0.013403216900950992,
+            "travel_angle_deg": 178.0056582587121,
+            "net_body_yaw_deg": -63.296143132850474
+          },
+          "sine_negative": {
+            "dx_m": -0.008077541586784934,
+            "dy_m": 0.004266848719823248,
+            "distance_vector_m": 0.009135243624780751,
+            "travel_angle_deg": 152.1553705720401,
+            "net_body_yaw_deg": 42.39355791481563
+          }
+        },
+        "later_cycle_mean_distance_m": 0.0044843352136758685,
+        "later_cycle_mean_yaw_p2p_deg": 21.677555649536952,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.009394730976302699,
+            "dy_m": -0.0011799261281828731,
+            "distance_m": 0.009468537151274747,
+            "travel_angle_deg": -172.84145027398483,
+            "yaw_change_deg": -20.900341157635737,
+            "yaw_peak_to_peak_deg": 36.76975811538268,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 2.5407797088967494
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.004025685462492582,
+            "dy_m": 0.001972695891550876,
+            "distance_m": 0.004483042775109983,
+            "travel_angle_deg": 153.89388336986423,
+            "yaw_change_deg": -0.026301947832902073,
+            "yaw_peak_to_peak_deg": 21.67755720887764,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.05757176063555597
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.004027658278539925,
+            "dy_m": 0.0019710742360833527,
+            "distance_m": 0.004484101342838135,
+            "travel_angle_deg": 153.92358250316502,
+            "yaw_change_deg": -0.007262572361028674,
+            "yaw_peak_to_peak_deg": 21.677556227341118,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.05757251275228648
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.004029204085677744,
+            "dy_m": 0.0019719198868622416,
+            "distance_m": 0.0044858615230794876,
+            "travel_angle_deg": 153.92255966538252,
+            "yaw_change_deg": -0.026544904455747087,
+            "yaw_peak_to_peak_deg": 21.6775535123921,
+            "mean_bias_rad_s": 15.0,
+            "max_tilt_deg": 0.05757254011918081
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_instant_request_-160",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "instant",
+        "requested_angle_deg": -160,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.051539211070014454,
+        "dy_m": 0.0049622815254412415,
+        "distance_m": 0.051777548374341134,
+        "travel_angle_deg": 174.50041862164844,
+        "requested_longitudinal_m": 0.04673381608506624,
+        "requested_lateral_m": -0.02229046768877762,
+        "heading_error_deg": -25.499581378351536,
+        "mean_speed_mps": 0.008621688181557969,
+        "final_yaw_deg": 2.3246123139453285,
+        "net_unwrapped_yaw_deg": 2.3246123139453285,
+        "max_tilt_deg": 2.7580096035536994,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.0174423445175256,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.013514771858890592,
+          "dy_m": -0.00048489009721509765,
+          "distance_m": 0.013523467632387721,
+          "travel_angle_deg": -177.94519326303723,
+          "yaw_change_deg": 2.3123487850578734,
+          "yaw_peak_to_peak_deg": 39.58726840904272,
+          "mean_bias_rad_s": -11.074528334267658,
+          "max_tilt_deg": 2.7580096035536994
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.024490411942625526,
+            "dy_m": 0.001520227529714556,
+            "distance_vector_m": 0.02453755018052122,
+            "travel_angle_deg": 176.4479566942763,
+            "net_body_yaw_deg": -84.68168508572958
+          },
+          "sine_negative": {
+            "dx_m": -0.027048799127388928,
+            "dy_m": 0.003442053995726685,
+            "distance_vector_m": 0.02726692630171824,
+            "travel_angle_deg": 172.74789022995472,
+            "net_body_yaw_deg": 87.0062973996749
+          }
+        },
+        "later_cycle_mean_distance_m": 0.012808148774730776,
+        "later_cycle_mean_yaw_p2p_deg": 36.21522402797341,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.013514771858890592,
+            "dy_m": -0.00048489009721509765,
+            "distance_m": 0.013523467632387721,
+            "travel_angle_deg": -177.94519326303723,
+            "yaw_change_deg": 2.3123487850578734,
+            "yaw_peak_to_peak_deg": 39.58726840904272,
+            "mean_bias_rad_s": -11.074528334267658,
+            "max_tilt_deg": 2.7580096035536994
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.012683846855410059,
+            "dy_m": 0.0018158273478423405,
+            "distance_m": 0.012813165105026463,
+            "travel_angle_deg": 171.85285831150935,
+            "yaw_change_deg": -0.024333698025732264,
+            "yaw_peak_to_peak_deg": 36.215408410123416,
+            "mean_bias_rad_s": -11.257677029916415,
+            "max_tilt_deg": 0.09402142594551954
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.01267421054145592,
+            "dy_m": 0.0018161621725969917,
+            "distance_m": 0.012803673609020365,
+            "travel_angle_deg": 171.84526404205863,
+            "yaw_change_deg": -0.010185947314699462,
+            "yaw_peak_to_peak_deg": 36.21513429919329,
+            "mean_bias_rad_s": -11.258131136552477,
+            "max_tilt_deg": 0.09402883364479571
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.012678146946456803,
+            "dy_m": 0.00181642580346816,
+            "distance_m": 0.012807607610145499,
+            "travel_angle_deg": 171.84659449138735,
+            "yaw_change_deg": -0.0386695242837094,
+            "yaw_peak_to_peak_deg": 36.215129374603514,
+            "mean_bias_rad_s": -11.256569753692181,
+            "max_tilt_deg": 0.09402884646304772
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_cycleavg_request_-160",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "cycle_average",
+        "requested_angle_deg": -160,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.06564954171294053,
+        "dy_m": 0.009520802251978154,
+        "distance_m": 0.0663363249105676,
+        "travel_angle_deg": 171.74822913981984,
+        "requested_longitudinal_m": 0.05843408375482998,
+        "requested_lateral_m": -0.03140009328607013,
+        "heading_error_deg": -28.25177086018016,
+        "mean_speed_mps": 0.01104592871710504,
+        "final_yaw_deg": 3.853725860151406,
+        "net_unwrapped_yaw_deg": 3.853725860151406,
+        "max_tilt_deg": 2.6334844660144414,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017733744067937724,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016672935490155905,
+          "dy_m": 0.0013264986292001357,
+          "distance_m": 0.01672562036135492,
+          "travel_angle_deg": 175.45112984309705,
+          "yaw_change_deg": -4.949444882260613,
+          "yaw_peak_to_peak_deg": 42.83497782560892,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.6334844660144414
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.0310023087584528,
+            "dy_m": 0.003237484231229136,
+            "distance_vector_m": 0.031170891108563074,
+            "travel_angle_deg": 174.03837023761025,
+            "net_body_yaw_deg": -107.92208248318907
+          },
+          "sine_negative": {
+            "dx_m": -0.03464723295448773,
+            "dy_m": 0.006283318020749017,
+            "distance_vector_m": 0.03521236766751719,
+            "travel_angle_deg": 169.72105435361263,
+            "net_body_yaw_deg": 111.77580834334046
+          }
+        },
+        "later_cycle_mean_distance_m": 0.016557412465847687,
+        "later_cycle_mean_yaw_p2p_deg": 43.00984477362369,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016672935490155905,
+            "dy_m": 0.0013264986292001357,
+            "distance_m": 0.01672562036135492,
+            "travel_angle_deg": 175.45112984309705,
+            "yaw_change_deg": -4.949444882260613,
+            "yaw_peak_to_peak_deg": 42.83497782560892,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.6334844660144414
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.013647454606194275,
+            "dy_m": 0.0021531028529213556,
+            "distance_m": 0.01381625380207643,
+            "travel_angle_deg": 171.03457621096143,
+            "yaw_change_deg": 10.872742516200091,
+            "yaw_peak_to_peak_deg": 43.326460927918625,
+            "mean_bias_rad_s": -14.286774800153974,
+            "max_tilt_deg": 0.10891706474478713
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.018054326009506603,
+            "dy_m": 0.0030126084320727135,
+            "distance_m": 0.018303947585768,
+            "travel_angle_deg": 170.52670397897066,
+            "yaw_change_deg": -2.078410004671773,
+            "yaw_peak_to_peak_deg": 42.801020695650415,
+            "mean_bias_rad_s": -11.863648656004306,
+            "max_tilt_deg": 0.11237453041764608
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.017288417254981335,
+            "dy_m": 0.003030609988669104,
+            "distance_m": 0.017552036009698627,
+            "travel_angle_deg": 170.0572367106041,
+            "yaw_change_deg": -0.08198956148394565,
+            "yaw_peak_to_peak_deg": 42.90205269730204,
+            "mean_bias_rad_s": -11.81444749457032,
+            "max_tilt_deg": 0.10923375999967583
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_cycleavg_request_+160",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005499999999391,
+        "dt_s": 0.0005,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "cycle_average",
+        "requested_angle_deg": 160,
+        "config": {
+          "dt": 0.0005,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.06644855331280854,
+        "dy_m": 0.018758754741582496,
+        "distance_m": 0.06904564516911985,
+        "travel_angle_deg": 164.23536477529808,
+        "requested_longitudinal_m": 0.06885708719527232,
+        "requested_lateral_m": 0.005099280322032388,
+        "heading_error_deg": 4.2353647752980805,
+        "mean_speed_mps": 0.011497068548684847,
+        "final_yaw_deg": -5.287611800835745,
+        "net_unwrapped_yaw_deg": -5.287611800835745,
+        "max_tilt_deg": 2.6334844660144414,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017733744067937724,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016672935490155905,
+          "dy_m": 0.0013264986292001357,
+          "distance_m": 0.01672562036135492,
+          "travel_angle_deg": 175.45112984309705,
+          "yaw_change_deg": -4.949444882260613,
+          "yaw_peak_to_peak_deg": 42.83497782560892,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.6334844660144414
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03281207973410982,
+            "dy_m": 0.007946977710908354,
+            "distance_vector_m": 0.033760732089444606,
+            "travel_angle_deg": 166.38531887973375,
+            "net_body_yaw_deg": -116.9529689985356
+          },
+          "sine_negative": {
+            "dx_m": -0.033636473578698714,
+            "dy_m": 0.010811777030674142,
+            "distance_vector_m": 0.03533138657584089,
+            "travel_angle_deg": 162.1810286728851,
+            "net_body_yaw_deg": 111.66535719769986
+          }
+        },
+        "later_cycle_mean_distance_m": 0.017584927041545535,
+        "later_cycle_mean_yaw_p2p_deg": 42.8969882584714,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016672935490155905,
+            "dy_m": 0.0013264986292001357,
+            "distance_m": 0.01672562036135492,
+            "travel_angle_deg": 175.45112984309705,
+            "yaw_change_deg": -4.949444882260613,
+            "yaw_peak_to_peak_deg": 42.83497782560892,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.6334844660144414
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.017015391585111086,
+            "dy_m": 0.006130553800228464,
+            "distance_m": 0.018086106288866182,
+            "travel_angle_deg": 160.18618200928495,
+            "yaw_change_deg": -1.4717403161338583,
+            "yaw_peak_to_peak_deg": 42.83297677666609,
+            "mean_bias_rad_s": 1.707898968154948,
+            "max_tilt_deg": 0.11138442563834546
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.016089560336887222,
+            "dy_m": 0.0055535352910449556,
+            "distance_m": 0.017021037161795288,
+            "travel_angle_deg": 160.95717447164094,
+            "yaw_change_deg": 1.3842711190977903,
+            "yaw_peak_to_peak_deg": 42.96892859706852,
+            "mean_bias_rad_s": 0.031492223289750945,
+            "max_tilt_deg": 0.10916608799490035
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.01668399525845255,
+            "dy_m": 0.005751818641772289,
+            "distance_m": 0.017647637673975133,
+            "travel_angle_deg": 160.97833239977854,
+            "yaw_change_deg": -0.3415278461886455,
+            "yaw_peak_to_peak_deg": 42.88905940167962,
+            "mean_bias_rad_s": 0.38721525961746894,
+            "max_tilt_deg": 0.10965907372092286
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_open_dt_half",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005500000001594,
+        "dt_s": 0.00025,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.00025,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.06636711655984852,
+        "dy_m": 0.01819172781064797,
+        "distance_m": 0.06881520995539592,
+        "travel_angle_deg": 164.67129803536946,
+        "requested_longitudinal_m": 0.05614275234098853,
+        "requested_lateral_m": -0.03979352310092245,
+        "heading_error_deg": -35.32870196463057,
+        "mean_speed_mps": 0.011458697852864482,
+        "final_yaw_deg": -5.058171876836185,
+        "net_unwrapped_yaw_deg": -5.058171876836185,
+        "max_tilt_deg": 2.62530326547802,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017733744067937724,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016628805735864945,
+          "dy_m": 0.0012262683314602282,
+          "distance_m": 0.016673959164573877,
+          "travel_angle_deg": 175.78243596042373,
+          "yaw_change_deg": -5.072374782297007,
+          "yaw_peak_to_peak_deg": 42.606946128903964,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.62530326547802
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03272063032964844,
+            "dy_m": 0.007655365377924097,
+            "distance_vector_m": 0.0336042299158756,
+            "travel_angle_deg": 166.8318534350877,
+            "net_body_yaw_deg": -116.54166764812985
+          },
+          "sine_negative": {
+            "dx_m": -0.03364648623020008,
+            "dy_m": 0.010536362432723871,
+            "distance_vector_m": 0.03525763703019189,
+            "travel_angle_deg": 162.61210661624037,
+            "net_body_yaw_deg": 111.48349577129365
+          }
+        },
+        "later_cycle_mean_distance_m": 0.017519664993296435,
+        "later_cycle_mean_yaw_p2p_deg": 42.88155263036608,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016628805735864945,
+            "dy_m": 0.0012262683314602282,
+            "distance_m": 0.016673959164573877,
+            "travel_angle_deg": 175.78243596042373,
+            "yaw_change_deg": -5.072374782297007,
+            "yaw_peak_to_peak_deg": 42.606946128903964,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.62530326547802
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.0165893599636666,
+            "dy_m": 0.0056480943327155645,
+            "distance_m": 0.017524492391945565,
+            "travel_angle_deg": 161.1980948838243,
+            "yaw_change_deg": 0.006448212924585306,
+            "yaw_peak_to_peak_deg": 42.88206855652972,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.10908782782329293
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.016576694343767823,
+            "dy_m": 0.00565929219444064,
+            "distance_m": 0.017516117820703333,
+            "travel_angle_deg": 161.15006821130825,
+            "yaw_change_deg": -0.011249228891649032,
+            "yaw_peak_to_peak_deg": 42.881294881861606,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.10909878124821655
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.016578904724521996,
+            "dy_m": 0.005659834183816959,
+            "distance_m": 0.017518384767240408,
+            "travel_angle_deg": 161.15072636146135,
+            "yaw_change_deg": -0.026399383505391505,
+            "yaw_peak_to_peak_deg": 42.88129445270692,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.10909881122754246
+          }
+        ]
+      }
+    },
+    {
+      "name": "gentle_cycleavg_-160_dt_half",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 6.005500000001594,
+        "dt_s": 0.00025,
+        "amplitude_scale": 0.75,
+        "frequency_scale": 0.8,
+        "fixed_bias_rad_s": 0.0,
+        "feedback": "cycle_average",
+        "requested_angle_deg": -160,
+        "config": {
+          "dt": 0.00025,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 112.40152707644552,
+          "frequency": 0.6660831234159735,
+          "bias": 0.0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.0655336558622861,
+        "dy_m": 0.009497570808683943,
+        "distance_m": 0.06621830488575278,
+        "travel_angle_deg": 171.75373097146337,
+        "requested_longitudinal_m": 0.05833313229768166,
+        "requested_lateral_m": -0.03133862757498611,
+        "heading_error_deg": -28.24626902853663,
+        "mean_speed_mps": 0.011026276727289187,
+        "final_yaw_deg": 3.755779961864576,
+        "net_unwrapped_yaw_deg": 3.755779961864576,
+        "max_tilt_deg": 2.62530326547802,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.017733744067937724,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.016628805735864945,
+          "dy_m": 0.0012262683314602282,
+          "distance_m": 0.016673959164573877,
+          "travel_angle_deg": 175.78243596042373,
+          "yaw_change_deg": -5.072374782297007,
+          "yaw_peak_to_peak_deg": 42.606946128903964,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 2.62530326547802
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.03095267974445734,
+            "dy_m": 0.003223132491726632,
+            "distance_vector_m": 0.031120041234261944,
+            "travel_angle_deg": 174.05516040325824,
+            "net_body_yaw_deg": -107.83115484244476
+          },
+          "sine_negative": {
+            "dx_m": -0.03458097611782876,
+            "dy_m": 0.0062744383169573105,
+            "distance_vector_m": 0.035145589843608334,
+            "travel_angle_deg": 169.71602388176646,
+            "net_body_yaw_deg": 111.58693480430932
+          }
+        },
+        "later_cycle_mean_distance_m": 0.016535757448833194,
+        "later_cycle_mean_yaw_p2p_deg": 42.98843114591808,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.016628805735864945,
+            "dy_m": 0.0012262683314602282,
+            "distance_m": 0.016673959164573877,
+            "travel_angle_deg": 175.78243596042373,
+            "yaw_change_deg": -5.072374782297007,
+            "yaw_peak_to_peak_deg": 42.606946128903964,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.62530326547802
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.01362363167906101,
+            "dy_m": 0.0021803716404004856,
+            "distance_m": 0.013797005494562123,
+            "travel_angle_deg": 170.90730137295128,
+            "yaw_change_deg": 10.899412667614957,
+            "yaw_peak_to_peak_deg": 43.30544334335639,
+            "mean_bias_rad_s": -14.290880228842651,
+            "max_tilt_deg": 0.10886700205066042
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.018017838843662756,
+            "dy_m": 0.0030358204124130415,
+            "distance_m": 0.018271801284291216,
+            "travel_angle_deg": 170.43607838123157,
+            "yaw_change_deg": -2.036867990881063,
+            "yaw_peak_to_peak_deg": 42.780683851064914,
+            "mean_bias_rad_s": -11.91317908629217,
+            "max_tilt_deg": 0.11224488241487376
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.017270146166809053,
+            "dy_m": 0.003056112865154571,
+            "distance_m": 0.01753846556764624,
+            "travel_angle_deg": 169.9648673800148,
+            "yaw_change_deg": -0.07979208451260522,
+            "yaw_peak_to_peak_deg": 42.87916624333295,
+            "mean_bias_rad_s": -11.848973499451587,
+            "max_tilt_deg": 0.10913876373234936
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_open_dt_half",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804250000000126,
+        "dt_s": 0.00025,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": 0,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.00025,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": 0,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.24156372448219496,
+        "dy_m": 0.0270014246462771,
+        "distance_m": 0.24306811785719323,
+        "travel_angle_deg": 173.62208707174122,
+        "requested_longitudinal_m": 0.21776061821796192,
+        "requested_lateral_m": -0.10799269916049606,
+        "heading_error_deg": -26.377912928258752,
+        "mean_speed_mps": 0.050594394100470806,
+        "final_yaw_deg": 25.86942051037522,
+        "net_unwrapped_yaw_deg": 25.86942051037522,
+        "max_tilt_deg": 3.7621176825589897,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.02471769787167612,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.05637275260170051,
+          "dy_m": 0.0032878231303808333,
+          "distance_m": 0.056468548917332724,
+          "travel_angle_deg": 176.66212448838348,
+          "yaw_change_deg": 44.622843262185356,
+          "yaw_peak_to_peak_deg": 102.085463098371,
+          "mean_bias_rad_s": 0.0,
+          "max_tilt_deg": 3.7621176825589897
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.11471384701303092,
+            "dy_m": 0.011975191778206426,
+            "distance_vector_m": 0.11533720958413154,
+            "travel_angle_deg": 174.0403731536613,
+            "net_body_yaw_deg": -288.818406341686
+          },
+          "sine_negative": {
+            "dx_m": -0.12684987746916404,
+            "dy_m": 0.015026232868070675,
+            "distance_vector_m": 0.127736756997144,
+            "travel_angle_deg": 173.2444050993055,
+            "net_body_yaw_deg": 314.6878268520612
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06247644158731497,
+        "later_cycle_mean_yaw_p2p_deg": 84.13344910136304,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.05637275260170051,
+            "dy_m": 0.0032878231303808333,
+            "distance_m": 0.056468548917332724,
+            "travel_angle_deg": 176.66212448838348,
+            "yaw_change_deg": 44.622843262185356,
+            "yaw_peak_to_peak_deg": 102.085463098371,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 3.7621176825589897
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.05426379249369177,
+            "dy_m": -0.00038662397610319784,
+            "distance_m": 0.0542651698043721,
+            "travel_angle_deg": -179.59178033378393,
+            "yaw_change_deg": -13.945068385614057,
+            "yaw_peak_to_peak_deg": 84.35153695684478,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 2.18204972629783
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.0664549309904033,
+            "dy_m": 0.01090597478016346,
+            "distance_m": 0.06734387974303846,
+            "travel_angle_deg": 170.68021667396576,
+            "yaw_change_deg": -4.114005212340999,
+            "yaw_peak_to_peak_deg": 83.38755288503782,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.4123549058480484
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.06448563449828057,
+            "dy_m": 0.013187553703064556,
+            "distance_m": 0.06582027521453435,
+            "travel_angle_deg": 168.442163078204,
+            "yaw_change_deg": -0.752468074912958,
+            "yaw_peak_to_peak_deg": 84.66125746220652,
+            "mean_bias_rad_s": 0.0,
+            "max_tilt_deg": 0.3598645128078449
+          }
+        ]
+      }
+    },
+    {
+      "name": "default_fixed_-15_dt_half",
+      "setup": {
+        "robot": "9lb",
+        "cycles": 4,
+        "duration_s": 4.804250000000126,
+        "dt_s": 0.00025,
+        "amplitude_scale": 1.0,
+        "frequency_scale": 1.0,
+        "fixed_bias_rad_s": -15,
+        "feedback": "none",
+        "requested_angle_deg": -160.0,
+        "config": {
+          "dt": 0.00025,
+          "mass": 4.082331330000001,
+          "tilt_deg": 15.0,
+          "friction": 0.7,
+          "rotor_inertia": 0.002186168406230624,
+          "max_torque": 3.464036364707418,
+          "max_speed": 374.6717569214851,
+          "gravity": 9.81,
+          "body_inertia_x": 0.07495434535647853,
+          "body_inertia_y": 0.09993912714197137,
+          "body_inertia_z": 0.12492390892746422,
+          "rotor_offset_y": 0.15146504316205858,
+          "rotor_height": 0.0,
+          "foot_half_length": 0.03606310551477586,
+          "foot_half_width": 0.03606310551477586,
+          "foot_drop": 0.07933883213250688,
+          "contact_stiffness": 37455.770285851875,
+          "contact_damping": 224.93150760981223,
+          "friction_velocity": 0.01801576947102129,
+          "servo_gain": 0.13001516788709055
+        },
+        "command": {
+          "enabled": true,
+          "mode": "Alternating gait",
+          "spin": 183.1728589393927,
+          "amplitude": 149.86870276859403,
+          "frequency": 0.8326039042699669,
+          "bias": -15,
+          "left": 183.1728589393927,
+          "right": -183.1728589393927
+        }
+      },
+      "metrics": {
+        "dx_m": -0.22794281048796258,
+        "dy_m": -0.0656647188111252,
+        "distance_m": 0.23721252106433033,
+        "travel_angle_deg": -163.9296097440118,
+        "requested_longitudinal_m": 0.23665483351595995,
+        "requested_lateral_m": -0.016256381000352767,
+        "heading_error_deg": -3.929609744011799,
+        "mean_speed_mps": 0.049375557280392175,
+        "final_yaw_deg": 62.094193232648955,
+        "net_unwrapped_yaw_deg": 62.094193232648955,
+        "max_tilt_deg": 2.7264255467529863,
+        "tipped_over": false,
+        "torque_saturation_fraction": 0.024015194879533745,
+        "command_clipping_fraction": 0.0,
+        "startup_cycle": {
+          "cycle": 1,
+          "dx_m": -0.04994823979766769,
+          "dy_m": 0.007920090423253118,
+          "distance_m": 0.0505722699826478,
+          "travel_angle_deg": 170.98985467794847,
+          "yaw_change_deg": 50.277196897944116,
+          "yaw_peak_to_peak_deg": 101.41080680637175,
+          "mean_bias_rad_s": -15.0,
+          "max_tilt_deg": 2.7264255467529863
+        },
+        "waveform_phase_aggregate": {
+          "sine_nonnegative": {
+            "dx_m": -0.10021278416208594,
+            "dy_m": -0.03798972600429255,
+            "distance_vector_m": 0.1071719244550458,
+            "travel_angle_deg": -159.23875218471284,
+            "net_body_yaw_deg": -260.9384282663852
+          },
+          "sine_negative": {
+            "dx_m": -0.12773002632587666,
+            "dy_m": -0.02767499280683266,
+            "distance_vector_m": 0.13069378275980606,
+            "travel_angle_deg": -167.77481144082597,
+            "net_body_yaw_deg": 323.0326214990342
+          }
+        },
+        "later_cycle_mean_distance_m": 0.06422577020045388,
+        "later_cycle_mean_yaw_p2p_deg": 86.059342911027,
+        "cycles": [
+          {
+            "cycle": 1,
+            "dx_m": -0.04994823979766769,
+            "dy_m": 0.007920090423253118,
+            "distance_m": 0.0505722699826478,
+            "travel_angle_deg": 170.98985467794847,
+            "yaw_change_deg": 50.277196897944116,
+            "yaw_peak_to_peak_deg": 101.41080680637175,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 2.7264255467529863
+          },
+          {
+            "cycle": 2,
+            "dx_m": -0.057211844547256925,
+            "dy_m": -0.021618872813902023,
+            "distance_m": 0.06116020616580003,
+            "travel_angle_deg": -159.29972109774192,
+            "yaw_change_deg": 10.020634776161224,
+            "yaw_peak_to_peak_deg": 87.79911566886864,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.3799222960154961
+          },
+          {
+            "cycle": 3,
+            "dx_m": -0.06074129537515721,
+            "dy_m": -0.02523775218914759,
+            "distance_m": 0.06577574856596402,
+            "travel_angle_deg": -157.43732134481812,
+            "yaw_change_deg": 1.455704061391181,
+            "yaw_peak_to_peak_deg": 85.37199106462279,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.374285054258364
+          },
+          {
+            "cycle": 4,
+            "dx_m": -0.06005546460537256,
+            "dy_m": -0.026744476861698244,
+            "distance_m": 0.06574135586959756,
+            "travel_angle_deg": -155.99517407437617,
+            "yaw_change_deg": 0.2793754545608351,
+            "yaw_peak_to_peak_deg": 85.00692199958958,
+            "mean_bias_rad_s": -15.0,
+            "max_tilt_deg": 0.35884715997707506
+          }
+        ]
+      }
+    }
+  ],
+  "metric_notes": "mean_speed_mps is net displacement/duration, not path length/time. Cycle windows include a boundary tolerance of one integration tick."
+}

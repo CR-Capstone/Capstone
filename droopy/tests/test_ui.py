@@ -97,6 +97,67 @@ def test_plot_sampling_pending_commands_and_presets():
     window.close()
 
 
+def test_frozen_math_and_playback_slider():
+    app = QApplication.instance() or QApplication([])
+    window=Window();window.timer.stop()
+    window.speed.setValue(.01);assert abs(window.speed.value()-.01)<1e-12
+    window.speed.setValue(1);assert window.speed.value()==1
+    window.speed.setValue(4);assert window.speed.value()==4
+    window.enabled.setChecked(True);window.advance(10)
+    window.open_explanation('motor')
+    text=window.detail.text();captured=window.inspector_capture[0]
+    window.advance(100)
+    assert window.detail.text()==text
+    assert window.inspector_capture[0] is captured
+    window.step_and_capture()
+    assert window.inspector_capture[0] is window.sim.last_diagnostic
+    assert window.inspector_capture[0] is not captured
+    window.lesson_step(.25)
+    assert window.lesson_ticks_remaining>0 and not window.run_button.isEnabled()
+    window.reset()
+    assert window.lesson_ticks_remaining==0 and window.run_button.isEnabled()
+    window.settings['dt'].setValue(.00001);window.apply_config()
+    window.lesson_step(2.5)
+    assert 2.5 <= window.lesson_ticks_remaining*window.sim.config.dt < 2.500011
+    window.reset()
+    window.close()
+
+
+def test_joystick_commands_motors_and_neutral_brakes():
+    app=QApplication.instance() or QApplication([])
+    window=Window();window.timer.stop()
+    window.direction_demo()
+    assert window.direction_enabled.isChecked()
+    assert window.joystick.strength==1
+    window.advance(40)
+    assert window.last_consumed_command.bias != window.inputs['bias'].value()
+    assert window.last_consumed_command.enabled
+    before=window.sim.position.copy()
+    window.joystick.centre()
+    window.refresh()
+    assert (window.sim.position==before).all()
+    window.advance(1)
+    assert not window.last_consumed_command.enabled
+    assert window.sim.last_diagnostic.targets_rad_s==(0.,0.)
+    window.close()
+
+
+def test_robot_setup_defaults_to_nine_pounds_and_presets_reset():
+    from droopy.presets import POUNDS_TO_KG
+    app=QApplication.instance() or QApplication([])
+    window=Window();window.timer.stop()
+    assert abs(window.sim.config.mass-9*POUNDS_TO_KG)<1e-10
+    assert '9.00 lb' in window.windowTitle()
+    window.load_robot_preset('3lb')
+    assert window.sim.config.mass==1.36
+    window.load_robot_preset('9lb')
+    assert abs(window.sim.config.mass-9*POUNDS_TO_KG)<1e-6
+    assert not window.enabled.isChecked()
+    assert not window.direction_enabled.isChecked()
+    assert window.sim.time==0
+    window.close()
+
+
 def test_settings_reject_nonfinite_without_reset(monkeypatch):
     app = QApplication.instance() or QApplication([])
     window = Window(); window.timer.stop(); window.advance(1)

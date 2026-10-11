@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .control import Command
 from .physics import Config, Simulator
+from .presets import robot_preset, DEFAULT_PRESET
 
 
 def positive(value):
@@ -22,16 +23,19 @@ def main():
     parser.add_argument("--seconds", type=positive, default=5.0)
     parser.add_argument("--csv", type=Path)
     parser.add_argument("--mode", choices=("gait", "constant", "off"), default="gait")
+    parser.add_argument('--robot',choices=('9lb','3lb'),default=DEFAULT_PRESET)
     parser.add_argument("--tilt", type=float, default=15.0)
     parser.add_argument("--friction", type=float, default=0.7)
     args = parser.parse_args()
-    config = Config(tilt_deg=args.tilt, friction=args.friction)
+    config,command = robot_preset(args.robot)
+    config.tilt_deg=args.tilt;config.friction=args.friction
     try:
         config.validate()
     except ValueError as exc:
         parser.error(str(exc))
     sim = Simulator(config)
-    command = Command(enabled=args.mode != "off", mode=("Constant counterspin" if args.mode == "constant" else "Alternating gait"))
+    command.enabled=args.mode != 'off'
+    command.mode='Constant counterspin' if args.mode=='constant' else 'Alternating gait'
     steps = math.ceil(args.seconds / config.dt)
     if steps > 2_000_000:
         parser.error("run exceeds 2,000,000 physics steps; shorten --seconds")
@@ -51,7 +55,7 @@ def main():
             handle.close()
     if args.csv:
         args.csv.with_suffix(".json").write_text(json.dumps({
-            "schema": "droopy-exploratory-v1", "config": asdict(config),
+            "schema": "droopy-exploratory-v1", "robot_preset":args.robot,"config": asdict(config),
             "command": asdict(command), "duration": sim.time,
             "final": sim.snapshot(),
         }, indent=2) + "\n")
