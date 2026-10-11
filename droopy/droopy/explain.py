@@ -65,7 +65,17 @@ def derive(key, d, config, command=None, demand_time=None) -> Derivation:
     """Build prose, substitutions, and independently recomputed named checks."""
     if key == "control":
         if command is None:
-            return Derivation("Control", "<p>Control demand unavailable.</p>")
+            raw = tuple(d.targets_rad_s)
+            clipped = tuple(np.clip(raw, -config.max_speed, config.max_speed))
+            return Derivation("Control", (
+                f"<p>Recorded consumed targets at t₀={d.time_before_s:.6f} s: "
+                f"{_v(raw,'rad/s')}.</p>"
+                f"<p>clip(raw, ±{config.max_speed:g})={_v(clipped,'rad/s')}; "
+                f"recorded requested targets={_v(d.requested_rad_s,'rad/s')}.</p>"
+                "<p>The clamp is independently checked below. Gait-command parameters "
+                "were not captured with this diagram, so the upstream waveform cannot "
+                "be reconstructed from this evidence alone.</p>"
+            ), ((Check("speed clamp", clipped, tuple(d.requested_rad_s)), "rad/s"),))
         t = float(d.time_before_s if demand_time is None else demand_time)
         if not command.enabled:
             raw = (0.0, 0.0)

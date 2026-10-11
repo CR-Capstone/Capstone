@@ -187,9 +187,35 @@ resolving the instantaneous inertia tensor of each bar. A tipped-over chassis is
 not accurately represented by feet-only collision. Stay near the upright regime;
 large tilt experiments can leave the model's physically meaningful range.
 
+### Live torque axes and system diagram
+
+**Torque axes (double arrows)** overlays motor reaction, Euler/gyroscopic term,
+floor torque and their effective sum on the arena. All use a common labelled
+N·m scale before camera projection. Axes are transformed with the consumed
+step's attitude; double arrowheads mean right-hand-rule rotation, not thrust.
+A circle marks a nonzero vector viewed end-on. Legend magnitudes remain visible
+when projection foreshortens an arrow. Click an axis for its rotation calculation.
+The effective sum is the right-hand side of the body Euler equation, not an
+additional external torque.
+
+Open **System** or **Live system diagram** for connected command, motor, rotation,
+contact, translation and next-tick feedback blocks with live equations and values.
+All numbers belong to one completed tick. Contacts use the pre-step state;
+updated attitude and position affect the *next* tick. **Freeze** / **Capture latest**
+holds a complete diagnostic/settings pair, and clicking a frozen block inspects
+that same tick rather than the latest simulation state.
+
 ### Integrated forces and straightness
 
 Open the **Motion** tab or **Integrated forces → motion** button above the arena.
+At the top, signed **along / sideways impulse vectors** form a head-to-tail
+parallelogram with a white net arrow. A separate velocity diagram shows
+`v₀ + J/m = v`; its scale is in m/s, not N·s. A signed velocity-history plot
+helps explain forward displacement even when end-of-cycle impulse is near zero:
+distance is `Σv Δt`, not net impulse. This sampled trace is explanatory; the
+reported displacement and existing path metrics use every simulation tick.
+Both vector diagrams freeze/reset with the rest of the Motion view.
+
 It integrates every physics tick (not display frames): floor reactions plus
 weight give net world impulse `J = ΣF Δt`, checked against `m(v−v₀)`. Motor
 torque is internal to the robot and is not counted again as a linear force.

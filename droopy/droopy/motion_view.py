@@ -4,6 +4,8 @@ from PySide6.QtCore import QPointF,QRectF,Qt
 from PySide6.QtGui import QColor,QPainter,QPen,QPolygonF
 from PySide6.QtWidgets import QWidget,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QCheckBox
 
+from .impulse_vectors import ImpulseVectorPanel
+
 
 class MotionCanvas(QWidget):
     def __init__(self):
@@ -101,20 +103,25 @@ class IntegratedMotionView(QWidget):
         self.freeze=QCheckBox('Freeze this view');self.freeze.toggled.connect(self.set_frozen);controls.addWidget(self.freeze)
         capture=QPushButton('Capture latest');capture.clicked.connect(self.capture_latest);controls.addWidget(capture)
         layout.addLayout(controls)
+        self.vector_panel=ImpulseVectorPanel();layout.addWidget(self.vector_panel)
         self.state_label=QLabel('Live integration');layout.addWidget(self.state_label)
         self.canvas=MotionCanvas();layout.addWidget(self.canvas)
 
+    def _show_snapshot(self,data):
+        self.vector_panel.set_snapshot(data)
+        self.canvas.set_snapshot(data)
+
     def update_snapshot(self,data):
         self.latest=data
-        if not self.frozen:self.canvas.set_snapshot(data)
+        if not self.frozen:self._show_snapshot(data)
 
     def set_frozen(self,enabled):
         self.frozen=enabled
         self.state_label.setText('Frozen totals/path — new samples still accumulate' if enabled else 'Live integration — every physics tick contributes')
-        if not enabled:self.canvas.set_snapshot(self.latest)
+        if not enabled:self._show_snapshot(self.latest)
 
     def capture_latest(self):
-        self.freeze.setChecked(True);self.canvas.set_snapshot(self.latest)
+        self.freeze.setChecked(True);self._show_snapshot(self.latest)
 
     def reset(self):
-        self.latest=None;self.freeze.setChecked(False);self.canvas.set_snapshot(None)
+        self.latest=None;self.freeze.setChecked(False);self._show_snapshot(None)

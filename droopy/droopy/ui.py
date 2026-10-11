@@ -30,6 +30,8 @@ from .steering import DirectionController
 from .presets import robot_preset, DEFAULT_PRESET, POUNDS_TO_KG
 from .impulse import ImpulseAccumulator
 from .motion_view import IntegratedMotionView
+from .torque_vectors import draw_torques
+from .system_view import SystemView
 
 
 STYLE = """
@@ -82,6 +84,7 @@ class Arena(QWidget):
         self.top = False
         self.scale = 900.0
         self.show_vectors = True
+        self.show_torques = True
         self.show_trail = True
         self._vector_hits = []
         self.setMouseTracking(True)
@@ -161,7 +164,9 @@ class Arena(QWidget):
             self._vector_hits.append(("translation", point(sim.position), point(velocity_end)))
         p.setPen(QColor("#dce5ef"))
         p.drawText(18, 27, f"DROOPY  /  {sim.config.mass/POUNDS_TO_KG:.2f} LB  /  TWIN-ROTOR DYNAMICS")
-        p.drawText(18, 49, "Grid 10 cm  ·  yellow: contact forces  ·  green: forward (+X)")
+        p.drawText(18, 49, "Grid 10 cm  ·  yellow: contact forces  ·  green: body +X")
+        if self.show_vectors and self.show_torques:
+            self._vector_hits.extend(draw_torques(p,sim.last_diagnostic,point,self.width()))
         p.drawText(18, self.height()-38, "Camera follows robot. Ring = rotor sweep; blades may alias at display rate.")
         p.drawText(18, self.height()-18, "Exploratory model · not measured Droopy geometry · no weapon impacts")
         p.end()
@@ -180,6 +185,7 @@ class Arena(QWidget):
         key = min(found)[1] if found and min(found)[0] < 12 and self.show_vectors else None
         self.setCursor(Qt.CursorShape.PointingHandCursor if key else Qt.CursorShape.ArrowCursor)
         self.setToolTip({"contacts":"Floor reaction: spring/damper normal force and traction-limited friction. Click for this tick’s calculation.",
+                         "rotation":"Double-headed torque axis: right-hand rule, not thrust. Body torque transformed with recorded pre-step attitude; gyro is an Euler coupling term. Click for this tick’s calculation.",
                          "translation":"Chassis velocity from contact forces and gravity. Click for F/m and integration."}.get(key,""))
 
     def mousePressEvent(self, event):
@@ -424,6 +430,10 @@ class Window(QMainWindow):
         self.vectors_check=QCheckBox("Vectors (click arrows)"); self.vectors_check.setChecked(True); self.vectors_check.toggled.connect(self.set_vectors); view.addWidget(self.vectors_check)
         self.trail_check=QCheckBox("Trail"); self.trail_check.setChecked(True); self.trail_check.toggled.connect(self.set_trail); view.addWidget(self.trail_check)
         self.zoom=QComboBox(); self.zoom.addItems(["Close","Medium","Wide"]); self.zoom.currentIndexChanged.connect(self.set_zoom); view.addWidget(self.zoom); view.addStretch(); visual.addLayout(view)
+        torque_controls=QHBoxLayout()
+        self.torques_check=QCheckBox('Torque axes (double arrows)');self.torques_check.setChecked(True)
+        self.torques_check.toggled.connect(lambda enabled:(setattr(self.arena,'show_torques',enabled),self.arena.update()))
+        torque_controls.addWidget(self.torques_check);torque_controls.addStretch();visual.addLayout(torque_controls)
         plot_controls=QHBoxLayout()
         plot_button=QPushButton('Plot channels ▾'); plot_button.setMenu(plot_menu); plot_controls.addWidget(plot_button)
         self.show_plot=QCheckBox('Show motor traces'); self.show_plot.setChecked(True)
@@ -462,7 +472,14 @@ class Window(QMainWindow):
         self.side_tabs.addTab(motion_scroll,'Motion')
         motion_button=QPushButton('Integrated forces → motion')
         motion_button.clicked.connect(lambda:self.side_tabs.setCurrentWidget(motion_scroll))
-        view.addWidget(motion_button)
+        torque_controls.addWidget(motion_button)
+        self.system_view=SystemView()
+        system_scroll=QScrollArea();system_scroll.setWidgetResizable(True);system_scroll.setWidget(self.system_view)
+        self.side_tabs.addTab(system_scroll,'System')
+        self.system_view.inspect_requested.connect(self.open_system_explanation)
+        system_button=QPushButton('Live system diagram')
+        system_button.clicked.connect(lambda:self.side_tabs.setCurrentWidget(system_scroll))
+        torque_controls.addWidget(system_button)
         self.settings_dialog=self._settings_dialog()
         self.statusBar().showMessage("Paused. Enable motors, then Start. Settings reset the experiment.")
         self.mode.currentTextChanged.connect(self.mode_changed); self.mode_changed(self.mode.currentText())
@@ -660,6 +677,7 @@ class Window(QMainWindow):
         if max(abs(d['roll_deg']),abs(d['pitch_deg'])) > 30:
             self.statusBar().showMessage("Large tilt: feet-only collision model is outside its useful upright range. Reset recommended.")
         self.motion_view.update_snapshot(self.impulse.snapshot())
+        self.system_view.update_tick(self.sim.last_diagnostic,self.sim.config)
         self.joystick.set_velocity(self.sim.velocity[0],self.sim.velocity[1])
         if self.direction_enabled.isChecked():
             state=self.direction_controller.state
@@ -687,7 +705,7 @@ class Window(QMainWindow):
         self.enabled.setChecked(False)
         self.sim.reset(); self.last_consumed_command=None; self.last_batch_count=0; self.accumulator = 0.
         self.inspector_capture=None; self._inspector_render_key=None; self.lesson.reset_history()
-        self.impulse.reset();self.motion_view.reset()
+        self.impulse.reset();self.motion_view.reset();self.system_view.reset()
         self.arena.trail.clear(); self.trace.samples.clear(); self.refresh()
 
     def apply_config(self):
@@ -705,6 +723,16 @@ class Window(QMainWindow):
         self.refresh()
         self.statusBar().showMessage("Settings applied; experiment reset.")
         return True
+
+    def open_system_explanation(self, key):
+        # Inspect the diagram's displayed evidence, including a frozen older tick.
+        self.live_math.setChecked(False)
+        self.inspector_capture=(self.system_view.diagnostic,self.system_view.config or replace(self.sim.config),None)
+        self._inspector_render_key=None
+        self.side_tabs.setCurrentIndex(3)
+        keys=[item[0] for item in KEYS]
+        if key in keys:self.explain_select.setCurrentIndex(keys.index(key))
+        self.refresh_explanation()
 
     def open_explanation(self, key):
         self.side_tabs.setCurrentIndex(3)
