@@ -1,15 +1,17 @@
-# Capstone — combat-robot physics simulators
+# Capstone — combat-robot physics simulators and controller
 
-Two independent desktop engineering sandboxes, in one repository:
+Three independent desktop tools, in one repository:
 
 | Project | Mechanism | Start |
 | --- | --- | --- |
 | [Melty](melty/README.md) | Spinning wheeled Meltybrain robot, native C++ physics and reference firmware | `./melty/run_sim.sh` |
 | [Droopy](droopy/README.md) | Twin angled rotors, reaction torque, gyroscopic coupling and contact-driven shuffling | `./droopy/run_sim.sh` |
+| [Controls](controls/README.md) | Serial controller for the real two-motor robot: DShot frames over a line protocol | `./controls/run_controls.sh` |
 
-Both offer interactive physics visualization and telemetry. Droopy is an
-**exploratory model**, not a calibrated replica of the real competition robot.
-Read each project's model limits before interpreting results.
+The two simulators offer interactive physics visualization and telemetry.
+Droopy is an **exploratory model**, not a calibrated replica of the real
+competition robot. Read each project's model limits before interpreting
+results.
 
 ## Layout
 
@@ -22,6 +24,9 @@ Capstone/
 ├── droopy/                # Python 3-D dynamics, UI, explainers and tests
 │   ├── droopy/
 │   └── run_sim.sh
+├── controls/              # Qt serial controller for the physical robot
+│   ├── controls/
+│   └── run_controls.sh
 └── .venv/                 # Optional shared environment (not in Git)
 ```
 
@@ -51,7 +56,10 @@ instead.
 ```sh
 ./melty/run_sim.sh
 ./droopy/run_sim.sh
+./controls/run_controls.sh
 ```
+
+Only `controls/` talks to hardware. The simulators do not.
 
 See the project READMEs for live controls, detailed physics assumptions,
 recordings, CLI experiments, and test commands.
@@ -64,8 +72,10 @@ From the repository root with the shared environment:
 ctest --test-dir melty/build --output-on-failure
 (cd melty && QT_QPA_PLATFORM=offscreen PYTHONPATH=build/python ../.venv/bin/python -m pytest -q tests)
 (cd droopy && QT_QPA_PLATFORM=offscreen ../.venv/bin/python -m pytest -q tests)
+(cd controls && QT_QPA_PLATFORM=offscreen ../.venv/bin/python -m pytest -q tests)
 QT_QPA_PLATFORM=offscreen ./melty/run_sim.sh --smoke
 QT_QPA_PLATFORM=offscreen ./droopy/run_sim.sh --smoke
+QT_QPA_PLATFORM=offscreen ./controls/run_controls.sh --smoke
 ```
 
 Generated build files, virtual environments, and Python caches remain excluded
