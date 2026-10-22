@@ -22,6 +22,7 @@ from .link import SerialLink
 from .pages import PAGES
 
 STATUS_INTERVAL_MS = 100
+BLUR_SETTLE_MS = 100
 
 
 class MainWindow(QMainWindow):
@@ -168,7 +169,11 @@ class MainWindow(QMainWindow):
         self.engine.disarm(reason)
 
     def _on_armed(self, armed: bool, reason: str) -> None:
+        # Reflect the engine without re-entering _toggle_arm, which would ask
+        # for confirmation again.
+        self.arm_button.blockSignals(True)
         self.arm_button.setChecked(armed)
+        self.arm_button.blockSignals(False)
         self.arm_button.setText("ARMED — click to stop" if armed else "ARM")
         self._set_banner(armed, reason)
 
@@ -204,8 +209,15 @@ class MainWindow(QMainWindow):
             and not self.isActiveWindow()
             and self.disarm_on_blur.isChecked()
         ):
-            self.panic("window lost focus")
+            # Focus moving to this app's own dialog (the arm confirmation) is
+            # not leaving. Wayland reports no active window between the leave
+            # and the enter, so look again once the move has settled.
+            QTimer.singleShot(BLUR_SETTLE_MS, self._check_blur)
         super().changeEvent(event)
+
+    def _check_blur(self) -> None:
+        if self.disarm_on_blur.isChecked() and QApplication.activeWindow() is None:
+            self.panic("window lost focus")
 
     def closeEvent(self, event) -> None:
         self.engine.disarm("closing")
