@@ -18,8 +18,9 @@ except ImportError:  # Surfaced by the launcher; keep import of this module safe
     serial = None
     list_ports = None
 
+# The sender ESP32 is a native USB serial device, so the baud rate is ignored.
 BAUD_RATES = (115200, 230400, 460800, 921600, 1000000, 2000000)
-DEFAULT_BAUD = 921600
+DEFAULT_BAUD = 115200
 WRITE_TIMEOUT_S = 0.02
 
 
@@ -63,10 +64,16 @@ class SerialLink(QObject):
             return False
         self.close("reopening")
         try:
-            self._port = serial.Serial(
-                device, baudrate=int(baud), timeout=0.1,
-                write_timeout=WRITE_TIMEOUT_S,
+            port = serial.Serial(
+                baudrate=int(baud), timeout=0.1, write_timeout=WRITE_TIMEOUT_S,
             )
+            port.port = device
+            # The XIAO's USB serial resets the chip on a DTR/RTS toggle; keep
+            # both deasserted so connecting doesn't reboot the sender.
+            port.dtr = False
+            port.rts = False
+            port.open()
+            self._port = port
         except Exception as exc:  # pyserial raises several unrelated types.
             self._port = None
             self.failed.emit(f"{device}: {exc}")

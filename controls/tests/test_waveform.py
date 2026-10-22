@@ -57,3 +57,26 @@ def test_disabled_gait_is_silent():
 def test_period():
     assert Gait(frequency=4.0).period() == pytest.approx(0.25)
     assert Gait(frequency=0.0).period() == 0.0
+
+
+def test_sim_presets_never_reverse_a_rotor():
+    """The droopy gait keeps its swing inside the counter-rotating base."""
+    from controls.waveform import PRESETS
+
+    for name, preset in PRESETS.items():
+        steady = Gait(**{**preset.__dict__, "ramp_s": 0.0})
+        period = steady.period() or 1.0
+        for step in range(360):
+            m1, m2 = steady.raw(period * step / 360.0)
+            assert m1 > 0.0 > m2, name
+            assert abs(m1) <= 1.0 and abs(m2) <= 1.0, name
+
+
+def test_nine_pound_preset_matches_the_simulator():
+    from controls.waveform import PRESETS
+
+    gait = PRESETS["Droopy sim gait, 9 lb (0.83 Hz)"]
+    max_speed = 374.67                       # rad/s, droopy README 9 lb table
+    assert gait.spin * max_speed == pytest.approx(183.17, rel=0.01)
+    assert gait.amplitude * max_speed == pytest.approx(149.87, rel=0.01)
+    assert gait.frequency == pytest.approx(0.8326, rel=0.01)

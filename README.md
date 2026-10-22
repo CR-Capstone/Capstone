@@ -6,7 +6,7 @@ Three independent desktop tools, in one repository:
 | --- | --- | --- |
 | [Melty](melty/README.md) | Spinning wheeled Meltybrain robot, native C++ physics and reference firmware | `./melty/run_sim.sh` |
 | [Droopy](droopy/README.md) | Twin angled rotors, reaction torque, gyroscopic coupling and contact-driven shuffling | `./droopy/run_sim.sh` |
-| [Controls](controls/README.md) | Serial controller for the real two-motor robot: DShot frames over a line protocol | `./controls/run_controls.sh` |
+| [Controls](controls/README.md) | Serial controller for the real two-motor robot, through the remote-dshot ESP32 link | `./controls/run_controls.sh` |
 
 The two simulators offer interactive physics visualization and telemetry.
 Droopy is an **exploratory model**, not a calibrated replica of the real

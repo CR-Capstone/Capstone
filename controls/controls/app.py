@@ -95,8 +95,13 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.banner)
 
     def _set_banner(self, armed: bool, detail: str) -> None:
-        color = theme.DANGER if armed else theme.OK
-        self.banner.setText(f"ARMED · {detail}" if armed else "DISARMED")
+        arming = armed and self.engine.state == "arming"
+        color = theme.WARN if arming else theme.DANGER if armed else theme.OK
+        if arming:
+            text = f"ARMING · {self.engine.arming_status()}"
+        else:
+            text = f"ARMED · {detail}" if armed else "DISARMED"
+        self.banner.setText(text)
         self.banner.setStyleSheet(
             f"background:{color}; color:#101923; padding:8px; border-radius:4px;"
         )
@@ -175,7 +180,12 @@ class MainWindow(QMainWindow):
         self._update_arm_enabled()
 
     def _refresh_status(self) -> None:
+        if self.engine.state == "arming":
+            self._set_banner(True, "")
         port = self.link.port_name or "no port"
+        lockout = self.engine.receiver_ready_in() if self.link.is_open else 0.0
+        if lockout > 0.0:
+            port += f" (receiver may be locked out {lockout:4.1f} s)"
         last = self.engine.last_frame
         wire = last.line.decode("ascii", "replace").strip() if last else "—"
         self.status_label.setText(

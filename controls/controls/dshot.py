@@ -10,8 +10,10 @@ The value is 0 for disarmed, 1..47 for ESC commands and 48..2047 for throttle.
 The checksum is the XOR of the three nibbles of ``value << 1 | telemetry``;
 bidirectional DShot inverts it so the ESC can reuse the line for RPM telemetry.
 
-Nothing here touches hardware. The 16-bit integers these functions return are
-what travels over the serial link; the firmware bit-bangs them.
+Nothing here touches hardware. The 11-bit value is what travels over the
+serial link; the receiver ESP32 builds the 16-bit frame itself (telemetry off,
+normal checksum) and the RMT peripheral clocks it out. :func:`frame` exists so
+the app can show exactly what the ESC receives.
 """
 from __future__ import annotations
 
@@ -22,11 +24,14 @@ VALUE_BITS = 11
 VALUE_MAX = 2047
 DISARMED = 0
 MIN_THROTTLE = 48
-# 3-D split: 48..1047 is one direction, 1048..2047 the other, each a full ramp.
+# 3-D split, as remote-dshot's ramp_test.py drives it: 48 (slowest) to 1047 is
+# reverse, 1048 is neutral, 1049 (slowest) to 2047 is forward.
 REVERSE_MIN, REVERSE_MAX = 48, 1047
-FORWARD_MIN, FORWARD_MAX = 1048, 2047
-HALF_SPAN = REVERSE_MAX - REVERSE_MIN  # 999
-FULL_SPAN = VALUE_MAX - MIN_THROTTLE   # 1999
+NEUTRAL_3D = 1048
+FORWARD_MIN, FORWARD_MAX = 1049, 2047
+REVERSE_SPAN = REVERSE_MAX - REVERSE_MIN  # 999
+FORWARD_SPAN = FORWARD_MAX - FORWARD_MIN  # 998
+FULL_SPAN = VALUE_MAX - MIN_THROTTLE      # 1999
 
 
 class Command(IntEnum):
@@ -94,6 +99,9 @@ class MotorMap:
     pair needs when both ESCs are wired identically. Without it the magnitude
     is used and the sign is dropped, because a unidirectional ESC has no way
     to express reverse.
+
+    Zero demand is :attr:`idle`: 3-D neutral in the split range, value 0
+    otherwise. Value 0 on a 3-D ESC is reserved for disarm and arming.
     """
 
     invert: bool = False
@@ -101,35 +109,40 @@ class MotorMap:
     deadband: float = 0.02
     limit: float = 1.0
 
+    @property
+    def idle(self) -> int:
+        """The value that holds the motor still while armed."""
+        return NEUTRAL_3D if self.three_d else DISARMED
+
     def value(self, demand: float) -> int:
         """Clamp, scale and quantise ``demand`` into a DShot value."""
         demand = float(demand)
         if demand != demand:  # NaN never reaches an ESC.
-            return DISARMED
+            return self.idle
         demand = max(-1.0, min(1.0, demand))
         if self.invert:
             demand = -demand
         limit = max(0.0, min(1.0, self.limit))
         demand *= limit
         if abs(demand) <= self.deadband:
-            return DISARMED
+            return self.idle
         if not self.three_d:
             return MIN_THROTTLE + round(abs(demand) * FULL_SPAN)
         if demand >= 0.0:
-            return FORWARD_MIN + round(demand * HALF_SPAN)
-        return REVERSE_MIN + round(-demand * HALF_SPAN)
+            return FORWARD_MIN + round(demand * FORWARD_SPAN)
+        return REVERSE_MIN + round(-demand * REVERSE_SPAN)
 
     def demand_of(self, value: int) -> float:
         """Inverse of :meth:`value`, for read-back and display."""
         value = int(value)
-        if value < MIN_THROTTLE:
+        if value < MIN_THROTTLE or (self.three_d and value == NEUTRAL_3D):
             return 0.0
         if not self.three_d:
             result = (value - MIN_THROTTLE) / FULL_SPAN
         elif value >= FORWARD_MIN:
-            result = (value - FORWARD_MIN) / HALF_SPAN
+            result = (value - FORWARD_MIN) / FORWARD_SPAN
         else:
-            result = -(value - REVERSE_MIN) / HALF_SPAN
+            result = -(value - REVERSE_MIN) / REVERSE_SPAN
         return -result if self.invert else result
 
 

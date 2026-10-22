@@ -5,16 +5,29 @@ Exactly one page drives the output at a time. The active page supplies a
 normalised to [-1, 1]; the engine turns that into DShot values through the
 per-motor :class:`~controls.dshot.MotorMap` and frames them.
 
-The link is change-driven, not a stream. The firmware holds the last packet it
-received until a new one arrives or its own timeout expires, so the engine
-sends a frame only when the values actually moved, and otherwise resends the
-held frame once per keepalive interval to prove the link is alive. The
-evaluation rate is therefore a ceiling on the send rate, not the send rate.
+The link is change-driven, not a stream. The receiver ESP32 repeats the last
+value it got in hardware until a new one arrives, so the engine sends a line
+only when the values actually moved, and otherwise resends the held line once
+per keepalive interval to prove the link is alive. The evaluation rate is
+therefore a ceiling on the send rate, not the send rate.
 
-Two rules the pages cannot override:
+The ESP32s only relay values; this engine owns the ESC protocol. Arming is a
+sequence, not a switch (``disarmed -> arming -> armed``):
 
-* Disarmed means value 0 on both motors, sent immediately and repeated, and a
-  transition to or from zero always goes out whatever the change threshold is.
+1. If the link went quiet for longer than the receiver's failsafe timeout, the
+   receiver is locked out and ignores everything for ``lockout_s``. Keep
+   sending 0 until that has certainly passed.
+2. Value 0 on both motors for ``arm_zero_s`` (1.6 s), so the ESCs arm.
+3. Idle (3-D neutral, 1048) for ``arm_neutral_s`` (0.4 s).
+4. Hand the output to the page, with its clock starting at zero.
+
+Rules the pages cannot override:
+
+* Disarmed means value 0 on both motors, sent immediately and repeated.
+* Armed zero demand is the motor map's idle (3-D neutral), never value 0, and
+  a transition to or from idle always goes out whatever the change threshold.
+* If the app itself goes quiet past the failsafe timeout while armed, the
+  receiver has cut the ESCs, so the engine disarms rather than resuming.
 * The waveform clock comes from :func:`time.perf_counter`, not from the timer
   tick count, so timer jitter shifts when a sample is taken but never distorts
   the wave it carries.
@@ -32,12 +45,18 @@ from .link import SerialLink
 
 Source = Callable[[float], tuple[float, float]]
 
-DEFAULT_RATE_HZ = 200
+DEFAULT_RATE_HZ = 100
 RATE_RANGE = (10, 1000)
-DEFAULT_KEEPALIVE_S = 0.5
-KEEPALIVE_RANGE = (0.02, 10.0)
-DEFAULT_HOLD_TIMEOUT_S = 2.0
+# remote-dshot's ramp_test.py sends every 50 ms.
+DEFAULT_KEEPALIVE_S = 0.05
+KEEPALIVE_RANGE = (0.01, 10.0)
+# receiver.c: FAILSAFE_TIMEOUT_MS and LOCKOUT_MS.
+DEFAULT_HOLD_TIMEOUT_S = 0.5
 HOLD_TIMEOUT_RANGE = (0.1, 60.0)
+DEFAULT_LOCKOUT_S = 10.0
+# ramp_test.py: DSHOT_ARM_CMD0_DURATION_MS and DSHOT_ARM_CENTER_DURATION_MS.
+DEFAULT_ARM_ZERO_S = 1.6
+DEFAULT_ARM_NEUTRAL_S = 0.4
 # Below this ratio of timeout to keepalive, one lost packet trips the failsafe.
 SAFE_KEEPALIVE_RATIO = 3.0
 DISARM_REPEATS = 8
@@ -46,6 +65,11 @@ CHANGE = "change"
 KEEPALIVE = "keepalive"
 COMMAND = "command"
 DISARM = "disarm"
+ARM = "arm"
+
+DISARMED = "disarmed"
+ARMING = "arming"
+ARMED = "armed"
 
 
 @dataclass(frozen=True)
@@ -77,13 +101,13 @@ class EngineConfig:
 
     rate_hz: int = DEFAULT_RATE_HZ
     keepalive_s: float = DEFAULT_KEEPALIVE_S
-    # What the firmware is configured to do, not something this app enforces.
-    # It is here so the UI can check the keepalive has margin against it.
+    # What the receiver firmware does on silence. The app cannot change these;
+    # it uses them to check the keepalive margin and to wait out a lockout.
     hold_timeout_s: float = DEFAULT_HOLD_TIMEOUT_S
+    lockout_s: float = DEFAULT_LOCKOUT_S
+    arm_zero_s: float = DEFAULT_ARM_ZERO_S
+    arm_neutral_s: float = DEFAULT_ARM_NEUTRAL_S
     change_counts: int = 1
-    bidirectional: bool = False
-    hex_mode: bool = False
-    telemetry: bool = False
     # 3-D by default: the gait pages counter-rotate, and a plain throttle range
     # has no way to express a negative demand.
     maps: list[dshot.MotorMap] = field(
@@ -106,13 +130,18 @@ class OutputEngine(QObject):
         self.config = config or EngineConfig()
         self._source: Source | None = None
         self._source_name = ""
-        self._armed = False
+        self._state = DISARMED
         self._origin = time.perf_counter()
+        self._arm_started = self._origin
         self._pending: list[_Pending] = []
         self._tick_times: list[float] = []
         self._send_times: list[float] = []
         self._last_values: tuple[int, int] | None = None
         self._last_send_at = -1e9
+        # Only lines that reached the port count towards the receiver's
+        # failsafe. Nothing has been sent yet, so assume it may be locked out.
+        self._last_wire_at = -1e9
+        self._alive_since: float | None = None
         self.frames_held = 0
         self.last_frame: TxFrame | None = None
         self._timer = QTimer(self)
@@ -142,23 +171,29 @@ class OutputEngine(QObject):
 
     @property
     def armed(self) -> bool:
-        return self._armed
+        """True from the moment the operator arms, through the sequence."""
+        return self._state != DISARMED
+
+    @property
+    def state(self) -> str:
+        return self._state
 
     def arm(self) -> bool:
-        """Arm, if a source is plugged in and the port is open."""
-        if self._armed:
+        """Start the arming sequence, if a source is plugged in and the port is open."""
+        if self._state != DISARMED:
             return True
         if self._source is None or not self.link.is_open:
             return False
-        self._origin = time.perf_counter()
-        self._armed = True
-        self.armed_changed.emit(True, self._source_name)
+        self._pending.clear()
+        self._arm_started = time.perf_counter()
+        self._state = ARMING
+        self.armed_changed.emit(True, f"arming · {self._source_name}")
         return True
 
     def disarm(self, reason: str = "operator") -> None:
         """Drop to value 0 and push disarm frames out immediately."""
-        was_armed = self._armed
-        self._armed = False
+        was_armed = self._state != DISARMED
+        self._state = DISARMED
         self._pending.clear()
         for _ in range(DISARM_REPEATS):
             self._emit(
@@ -166,6 +201,42 @@ class OutputEngine(QObject):
             )
         if was_armed:
             self.armed_changed.emit(False, reason)
+
+    def receiver_ready_in(self) -> float:
+        """Seconds until a lockout the receiver may be in has certainly ended."""
+        return max(0.0, self._receiver_ready_at() - time.perf_counter())
+
+    def _receiver_ready_at(self) -> float:
+        """When the receiver is certain to forward again.
+
+        A lockout starts when the receiver notices a gap, which is no later
+        than the first line after it, and lasts ``lockout_s``. Lines that have
+        flowed since then without a gap keep it forwarding.
+        """
+        if self._alive_since is None:
+            return time.perf_counter() + self.config.lockout_s
+        return self._alive_since + self.config.lockout_s
+
+    def arming_status(self) -> str:
+        """Where the arming sequence is, for the banner. Empty unless arming."""
+        if self._state != ARMING:
+            return ""
+        phase, left = self._arming_phase(time.perf_counter())
+        return f"{phase} {left:.1f} s"
+
+    def _arming_phase(self, now: float) -> tuple[str, float]:
+        """``(phase, seconds left in it)``; phase is lockout, zero, neutral or done."""
+        config = self.config
+        zero_from = max(self._arm_started, self._receiver_ready_at())
+        if now < zero_from:
+            return "lockout", zero_from - now
+        zero_until = zero_from + config.arm_zero_s
+        if now < zero_until:
+            return "zero", zero_until - now
+        neutral_until = zero_until + config.arm_neutral_s
+        if now < neutral_until:
+            return "neutral", neutral_until - now
+        return "done", 0.0
 
     # ---- source --------------------------------------------------------
 
@@ -183,13 +254,18 @@ class OutputEngine(QObject):
     # ---- special commands ----------------------------------------------
 
     def queue_command(
-        self, value: int, repeats: int = 10, motors: tuple[bool, bool] = (True, True)
+        self, value: int, repeats: int = 3, motors: tuple[bool, bool] = (True, True)
     ) -> None:
-        """Queue a DShot command (1..47). Ignored while armed; ESCs want zero throttle."""
+        """Queue a DShot command (1..47). Ignored while armed; ESCs want zero throttle.
+
+        The receiver repeats each value in hardware until the next line, so one
+        line already reaches the ESC as a continuous run of command frames. The
+        repeats are there to survive a dropped ESP-NOW packet.
+        """
         value = int(value)
         if not 0 <= value < dshot.MIN_THROTTLE:
             raise ValueError(f"{value} is not a DShot command value")
-        if self._armed:
+        if self._state != DISARMED:
             return
         self._pending.append(_Pending(value, max(1, int(repeats)), motors))
 
@@ -217,6 +293,14 @@ class OutputEngine(QObject):
             del self._tick_times[:-128]
         t = now - self._origin
 
+        # The receiver has already cut the ESCs and locked out; resuming
+        # mid-gait would hand them throttle without an arming sequence.
+        # While arming, a gap only pushes the sequence back to the lockout wait.
+        if (self._state == ARMED
+                and now - self._last_wire_at > self.config.hold_timeout_s):
+            self.disarm("link went quiet, receiver failsafe")
+            return
+
         if self._pending:
             job = self._pending[0]
             job.repeats -= 1
@@ -228,9 +312,23 @@ class OutputEngine(QObject):
             self._emit(t, (0.0, 0.0), values, COMMAND)
             return
 
-        if not self._armed or self._source is None:
+        if self._state == DISARMED or self._source is None:
             self._offer(t, (0.0, 0.0), (dshot.DISARMED, dshot.DISARMED))
             return
+
+        if self._state == ARMING:
+            phase, _left = self._arming_phase(now)
+            if phase in ("lockout", "zero"):
+                self._offer(t, (0.0, 0.0), (dshot.DISARMED, dshot.DISARMED), ARM)
+                return
+            if phase == "neutral":
+                idle = tuple(m.idle for m in self.config.maps)
+                self._offer(t, (0.0, 0.0), idle, ARM)
+                return
+            self._state = ARMED
+            self._origin = now
+            t = 0.0
+            self.armed_changed.emit(True, self._source_name)
 
         try:
             demand = self._source(t)
@@ -242,29 +340,38 @@ class OutputEngine(QObject):
         self._offer(t, pair, values)
 
     def _offer(
-        self, t: float, demand: tuple[float, float], values: tuple[int, int]
+        self,
+        t: float,
+        demand: tuple[float, float],
+        values: tuple[int, int],
+        why: str = CHANGE,
     ) -> None:
         """Send if the values moved, or if the keepalive is due. Else hold."""
         reason = self._reason_to_send(values)
         if reason is None:
             self.frames_held += 1
             return
-        self._emit(t, demand, values, reason)
+        self._emit(t, demand, values, why if reason == CHANGE else reason)
 
     def _reason_to_send(self, values: tuple[int, int]) -> str | None:
         previous = self._last_values
         if previous is None:
             return CHANGE
         # Starting or stopping a motor is never suppressed by the threshold.
-        if any((v == dshot.DISARMED) != (p == dshot.DISARMED)
-               for v, p in zip(values, previous)):
+        if any(self._still(v, m) != self._still(p, m)
+               for v, p, m in zip(values, previous, self.config.maps)):
             return CHANGE
         threshold = max(1, int(self.config.change_counts))
         if any(abs(v - p) >= threshold for v, p in zip(values, previous)):
             return CHANGE
-        if time.perf_counter() - self._last_send_at >= self.config.keepalive_s:
+        # The epsilon keeps float rounding from slipping a keepalive a whole tick.
+        if time.perf_counter() - self._last_send_at >= self.config.keepalive_s - 1e-9:
             return KEEPALIVE
         return None
+
+    @staticmethod
+    def _still(value: int, mapping: dshot.MotorMap) -> bool:
+        return value == dshot.DISARMED or value == mapping.idle
 
     def _emit(
         self,
@@ -273,13 +380,15 @@ class OutputEngine(QObject):
         values: tuple[int, int],
         reason: str,
     ) -> None:
-        words = tuple(
-            dshot.frame(v, self.config.telemetry, self.config.bidirectional)
-            for v in values
-        )
-        line = protocol.encode(words[0], words[1], self.config.hex_mode)
+        # What the receiver builds from each value and clocks out to the ESC.
+        words = tuple(dshot.frame(v) for v in values)
+        line = protocol.encode(values[0], values[1])
         sent = self.link.write(line)
         now = time.perf_counter()
+        if sent:
+            if now - self._last_wire_at > self.config.hold_timeout_s:
+                self._alive_since = now
+            self._last_wire_at = now
         self._last_values = values
         self._last_send_at = now
         self._send_times.append(now)

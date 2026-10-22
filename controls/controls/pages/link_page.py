@@ -18,7 +18,7 @@ from .. import dshot, protocol, theme
 from ..engine import (
     HOLD_TIMEOUT_RANGE, KEEPALIVE_RANGE, RATE_RANGE, keepalive_margin,
 )
-from ..link import BAUD_RATES, available_ports
+from ..link import BAUD_RATES, DEFAULT_BAUD, available_ports
 from .base import ControlPage
 
 CONSOLE_LINES = 400
@@ -35,7 +35,7 @@ class MotorMapBox(QGroupBox):
 
         self.invert = QCheckBox("Invert sign")
         self.invert.setChecked(mapping.invert)
-        self.three_d = QCheckBox("3-D range (48–1047 rev / 1048–2047 fwd)")
+        self.three_d = QCheckBox("3-D range (48–1047 rev · 1048 neutral · 1049–2047 fwd)")
         self.three_d.setChecked(mapping.three_d)
         self.deadband = QDoubleSpinBox()
         self.deadband.setRange(0.0, 0.5)
@@ -81,7 +81,7 @@ class LinkPage(ControlPage):
 
         left.addWidget(self._port_box())
         left.addWidget(self._timing_box())
-        left.addWidget(self._format_box())
+        left.addWidget(self._arming_box())
         maps = QHBoxLayout()
         for index, mapping in enumerate(engine.config.maps):
             maps.addWidget(MotorMapBox(index, mapping, self._preview))
@@ -99,7 +99,7 @@ class LinkPage(ControlPage):
 
         send_row = QHBoxLayout()
         self.manual = QLineEdit()
-        self.manual.setPlaceholderText("raw line to send, e.g.  49541 17544")
+        self.manual.setPlaceholderText("raw line to send, e.g.  1048 1048")
         self.manual.returnPressed.connect(self._send_manual)
         send = QPushButton("Send line")
         send.clicked.connect(self._send_manual)
@@ -127,7 +127,8 @@ class LinkPage(ControlPage):
         self.baud = QComboBox()
         for rate in BAUD_RATES:
             self.baud.addItem(str(rate), rate)
-        self.baud.setCurrentText("921600")
+        self.baud.setCurrentText(str(DEFAULT_BAUD))
+        self.baud.setToolTip("Ignored by the XIAO's native USB serial.")
         rescan = QPushButton("Rescan")
         rescan.clicked.connect(self.refresh_ports)
         self.connect_button = QPushButton("Connect")
@@ -175,8 +176,8 @@ class LinkPage(ControlPage):
         self.hold_timeout.setValue(config.hold_timeout_s)
         self.hold_timeout.setSuffix(" s")
         self.hold_timeout.setToolTip(
-            "How long the firmware holds the last packet before failing safe. "
-            "Set it to match the firmware; this app only checks the margin."
+            "How long the receiver forwards the last value before cutting the "
+            "ESCs (FAILSAFE_TIMEOUT_MS in receiver.c). Match the firmware."
         )
 
         self.change_counts = QSpinBox()
@@ -206,24 +207,38 @@ class LinkPage(ControlPage):
             widget.valueChanged.connect(self._apply_format)
         return box
 
-    def _format_box(self) -> QGroupBox:
-        box = QGroupBox("Wire format")
+    def _arming_box(self) -> QGroupBox:
+        box = QGroupBox("Receiver lockout and arming sequence")
         form = QFormLayout(box)
         config = self.engine.config
 
-        self.bidirectional = QCheckBox("Bidirectional DShot (inverted checksum)")
-        self.bidirectional.setChecked(config.bidirectional)
-        self.telemetry = QCheckBox("Request telemetry bit")
-        self.telemetry.setChecked(config.telemetry)
-        self.hex_mode = QCheckBox("Send frames as hex (0xXXXX)")
-        self.hex_mode.setChecked(config.hex_mode)
+        def seconds(value: float, low: float, high: float, tip: str) -> QDoubleSpinBox:
+            spin = QDoubleSpinBox()
+            spin.setRange(low, high)
+            spin.setDecimals(2)
+            spin.setSingleStep(0.1)
+            spin.setValue(value)
+            spin.setSuffix(" s")
+            spin.setToolTip(tip)
+            spin.valueChanged.connect(self._apply_format)
+            return spin
 
-        form.addRow(self.bidirectional)
-        form.addRow(self.telemetry)
-        form.addRow(self.hex_mode)
-
-        for widget in (self.bidirectional, self.telemetry, self.hex_mode):
-            widget.toggled.connect(self._apply_format)
+        self.lockout = seconds(
+            config.lockout_s, 0.0, 60.0,
+            "After a failsafe the receiver ignores everything for this long "
+            "(LOCKOUT_MS in receiver.c). Arming waits it out.",
+        )
+        self.arm_zero = seconds(
+            config.arm_zero_s, 0.0, 10.0,
+            "Value 0 on both motors so the ESCs arm.",
+        )
+        self.arm_neutral = seconds(
+            config.arm_neutral_s, 0.0, 10.0,
+            "Then idle (3-D neutral 1048) before the page takes over.",
+        )
+        form.addRow("Receiver lockout", self.lockout)
+        form.addRow("Arm: hold 0 for", self.arm_zero)
+        form.addRow("Then neutral for", self.arm_neutral)
         return box
 
     def _preview_box(self) -> QGroupBox:
@@ -271,9 +286,9 @@ class LinkPage(ControlPage):
 
     def _apply_format(self, *_args) -> None:
         config = self.engine.config
-        config.bidirectional = self.bidirectional.isChecked()
-        config.telemetry = self.telemetry.isChecked()
-        config.hex_mode = self.hex_mode.isChecked()
+        config.lockout_s = self.lockout.value()
+        config.arm_zero_s = self.arm_zero.value()
+        config.arm_neutral_s = self.arm_neutral.value()
         config.keepalive_s = self.keepalive.value()
         config.hold_timeout_s = self.hold_timeout.value()
         config.change_counts = self.change_counts.value()
@@ -284,15 +299,15 @@ class LinkPage(ControlPage):
         config = self.engine.config
         demands = (0.5, -0.5)
         values = [m.value(d) for m, d in zip(config.maps, demands)]
-        words = [
-            dshot.frame(v, config.telemetry, config.bidirectional) for v in values
-        ]
-        line = protocol.encode(words[0], words[1], config.hex_mode)
+        idle = [m.idle for m in config.maps]
+        words = [dshot.frame(v) for v in values]
+        line = protocol.encode(values[0], values[1])
         self.preview.setText(
             f"demand   {demands[0]:+.2f}  {demands[1]:+.2f}\n"
-            f"dshot    {values[0]}  {values[1]}\n"
-            f"frame    0x{words[0]:04X}  0x{words[1]:04X}\n"
-            f"on wire  {line!r}"
+            f"on wire  {line!r}      armed idle {idle[0]} {idle[1]}\n"
+            f"ESC gets 0x{words[0]:04X}  0x{words[1]:04X}   (frame built by the receiver)\n"
+            f"arming   0 for {config.arm_zero_s:.1f} s, then {idle[0]} {idle[1]} "
+            f"for {config.arm_neutral_s:.1f} s"
         )
         idle = len(line) / config.keepalive_s
         busy = len(line) * config.rate_hz

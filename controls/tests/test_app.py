@@ -62,7 +62,8 @@ def test_running_a_bench_test_drives_the_output(qt_app):
     try:
         bench = window.pages[1]
         window.tabs.setCurrentIndex(1)
-        bench.tests.setCurrentRow(3)          # counter-rotate check
+        names = [bench.tests.item(i).text() for i in range(bench.tests.count())]
+        bench.tests.setCurrentRow(names.index("Counter-rotate check"))
         bench.run_button.setChecked(True)
         assert bench.sample(0.0) == (0.0, 0.0)  # settles first
         assert bench.sample(3.0) == (0.12, -0.12)

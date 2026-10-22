@@ -168,7 +168,8 @@ class BenchPage(ControlPage):
             button.clicked.connect(lambda _=False, v=value: self.engine.queue_command(v))
             grid.addWidget(button, position // 2, position % 2)
         note = QLabel(
-            "Sent ten times to both motors. ESCs ignore these while spinning.",
+            "Three lines to both motors; the receiver repeats each one until "
+            "the next. ESCs ignore these while spinning.",
             objectName="mono",
         )
         note.setWordWrap(True)

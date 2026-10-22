@@ -8,7 +8,7 @@ def make_frame(t, demand=(0.381, -0.319)):
     maps = [dshot.MotorMap(three_d=True), dshot.MotorMap(three_d=True)]
     values = tuple(m.value(d) for m, d in zip(maps, demand))
     words = tuple(dshot.frame(v) for v in values)
-    line = protocol.encode(words[0], words[1])
+    line = protocol.encode(values[0], values[1])
     return TxFrame(t, demand, values, words, (False, False), True, line)
 
 
@@ -17,8 +17,11 @@ def test_describe_matches_the_frame():
     text = describe(frame.values[0], frame.words[0], frame.demand[0], 0)
     assert f"dshot {frame.values[0]}" in text
     assert f"0x{frame.words[0]:04X}" in text
-    assert str(frame.words[0]) in text
     assert "crc" in text and "BAD" not in text
+
+
+def test_describe_names_neutral():
+    assert "3-D neutral" in describe(1048, dshot.frame(1048), 0.0, 0)
 
 
 def test_describe_names_commands_and_disarm():

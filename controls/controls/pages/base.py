@@ -58,3 +58,20 @@ def reverse_warning(engine: OutputEngine, negative: tuple[bool, bool]) -> str:
         f"{names} commanded negative with no 3-D range: it leaves as forward "
         f"throttle. Set 3-D on the link page, or reverse the ESC."
     )
+
+
+def zero_crossing_warning(crosses: tuple[bool, bool]) -> str:
+    """Flag a motor whose demand changes sign within a gait cycle.
+
+    Each crossing makes the ESC brake a loaded rotor through 3-D neutral and
+    spin it up the other way: a current spike and the likeliest desync. The
+    droopy gait never needs it; keep the wave and bias inside the spin base.
+    """
+    bad = [index + 1 for index in (0, 1) if crosses[index]]
+    if not bad:
+        return ""
+    names = " and ".join(f"M{n}" for n in bad)
+    return (
+        f"{names} reverses direction every cycle. Keep amplitude + |bias| "
+        f"below the spin base."
+    )

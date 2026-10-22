@@ -1,19 +1,20 @@
-"""Reference receiver for the control line, as the firmware has to implement it.
+"""Reference model of the remote-dshot receiver, for checking the app offline.
 
-The contract has two halves. The laptop sends a packet whenever the values
-change and resends the held packet on a keepalive. The firmware holds the last
-packet it accepted and drives the ESCs from it until either a new packet
-arrives or it has heard nothing for the hold timeout, at which point it fails
-safe to DShot value 0.
+The real path is: this app -> serial -> sender ESP32 -> ESP-NOW -> receiver
+ESP32 -> DShot -> ESC. The sender forwards ``"<a> <b>\\n"`` lines with two bare
+DShot values in 0..2047. The receiver (``main/receiver.c``) is a three-state
+machine:
 
-:class:`Hold` is that receiver. Run it here against a port or a capture so the
-behaviour can be checked without hardware::
+* IDLE — no output. The first valid packet starts output.
+* ACTIVE — every packet replaces the value being repeated to the ESCs. A gap
+  longer than the failsafe timeout (500 ms) stops output.
+* LOCKOUT — no output, every packet ignored for 10 s, then back to IDLE.
 
-    python tools/firmware_reference.py /dev/cu.usbmodem1101
-    python tools/firmware_reference.py capture.txt --hold 2.0
+:class:`Receiver` mirrors that, so the app's timing can be checked against a
+capture or a live port without the radio link::
 
-A real firmware does the same four things: split the line, verify both
-checksums, reject the frame if either fails, and fail safe on silence.
+    python tools/firmware_reference.py capture.txt
+    python tools/firmware_reference.py /dev/ttyACM0
 """
 from __future__ import annotations
 
@@ -26,120 +27,130 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from controls import dshot, protocol  # noqa: E402
 
-DEFAULT_HOLD_S = 2.0
+DEFAULT_FAILSAFE_S = 0.5
+DEFAULT_LOCKOUT_S = 10.0
+
+IDLE = "IDLE"
+ACTIVE = "ACTIVE"
+LOCKOUT = "LOCKOUT"
 
 
-def describe(words: tuple[int, int]) -> str:
-    """One row for a pair of frames, decoded the way an ESC reads them."""
+def describe(values: tuple[int, int]) -> str:
+    """One row for a pair of values, named the way an ESC reads them."""
     fields = []
-    for index, word in enumerate(words):
-        value, telemetry, ok = dshot.decode(word)
+    for index, value in enumerate(values):
         kind = (
-            "disarmed" if value == dshot.DISARMED
+            "stop/arm" if value == dshot.DISARMED
             else f"command {value}" if value < dshot.MIN_THROTTLE
+            else "neutral" if value == dshot.NEUTRAL_3D
             else f"throttle {value}"
         )
-        fields.append(
-            f"M{index + 1} 0x{word:04X} {kind:<14}"
-            f" telem={int(telemetry)} crc={'ok' if ok else 'BAD'}"
-        )
+        fields.append(f"M{index + 1} {value:4d} {kind:<13}")
     return "  ".join(fields)
 
 
-class Hold:
-    """The last accepted packet, and the timeout that gives it up."""
+class Receiver:
+    """The receiver's state machine, driven by arrival times."""
 
-    def __init__(self, timeout_s: float = DEFAULT_HOLD_S) -> None:
-        self.timeout_s = float(timeout_s)
-        self.words: tuple[int, int] = (0, 0)
-        self.last_accepted_at: float | None = None
-        self.failsafe = True
+    def __init__(
+        self,
+        failsafe_s: float = DEFAULT_FAILSAFE_S,
+        lockout_s: float = DEFAULT_LOCKOUT_S,
+    ) -> None:
+        self.failsafe_s = float(failsafe_s)
+        self.lockout_s = float(lockout_s)
+        self.state = IDLE
+        self.output: tuple[int, int] | None = None
+        self.last_rx: float | None = None
+        self.lockout_start = 0.0
         self.accepted = 0
         self.rejected = 0
+        self.ignored = 0
         self.failsafe_trips = 0
 
     def receive(self, line: str, now: float) -> str:
-        """Take one line. Returns the row to print, held state included."""
+        """Take one line arriving at ``now``. Returns the row to print."""
+        tripped = self.tick(now)
+        prefix = f"{tripped}\n" if tripped else ""
         try:
-            words = protocol.decode(line)
+            values = protocol.decode(line)
         except ValueError as exc:
             self.rejected += 1
-            return f"REJECT  {line.strip()!r}  ({exc})"
-        for word in words:
-            if not dshot.decode(word)[2]:
-                self.rejected += 1
-                return f"REJECT  {describe(words)}  (checksum)"
-        gap = "" if self.last_accepted_at is None else (
-            f"  +{now - self.last_accepted_at:.3f}s"
-        )
-        resumed = "  RESUMED" if self.failsafe and self.accepted else ""
-        self.words = words
-        self.last_accepted_at = now
-        self.failsafe = False
+            return f"{prefix}REJECT  {line.strip()!r}  ({exc})"
+        if self.state == LOCKOUT:
+            self.ignored += 1
+            left = self.lockout_s - (now - self.lockout_start)
+            return f"{prefix}IGNORE  {describe(values)}  (lockout, {left:.1f} s left)"
+        gap = "" if self.last_rx is None else f"  +{now - self.last_rx:.3f}s"
+        started = "  OUTPUT STARTED" if self.state == IDLE else ""
+        self.state = ACTIVE
+        self.output = values
+        self.last_rx = now
         self.accepted += 1
-        return f"HOLD    {describe(words)}{gap}{resumed}"
+        return f"{prefix}FORWARD {describe(values)}{gap}{started}"
 
     def tick(self, now: float) -> str | None:
-        """Check for silence. Returns a row when the failsafe trips."""
-        if self.failsafe or self.last_accepted_at is None:
-            return None
-        if now - self.last_accepted_at < self.timeout_s:
-            return None
-        self.failsafe = True
-        self.failsafe_trips += 1
-        self.words = (0, 0)
-        return (
-            f"FAILSAFE  no packet for {self.timeout_s:.2f} s — "
-            f"outputs forced to value 0"
-        )
-
-    @property
-    def values(self) -> tuple[int, int]:
-        """The DShot values the ESCs are being driven with right now."""
-        return tuple(dshot.decode(word)[0] for word in self.words)
+        """Advance the clock. Returns a row when the state changes."""
+        if self.state == ACTIVE and now - self.last_rx > self.failsafe_s:
+            self.state = LOCKOUT
+            self.output = None
+            self.lockout_start = now
+            self.failsafe_trips += 1
+            return (
+                f"FAILSAFE  gap of {now - self.last_rx:.3f} s — output stopped, "
+                f"locked out for {self.lockout_s:.0f} s"
+            )
+        if self.state == LOCKOUT and now - self.lockout_start >= self.lockout_s:
+            self.state = IDLE
+            return "IDLE      lockout over, waiting for packets"
+        return None
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", help="serial device or a text file of lines")
-    parser.add_argument("--baud", type=int, default=921600)
-    parser.add_argument("--hold", type=float, default=DEFAULT_HOLD_S,
-                        help="hold timeout in seconds")
+    parser.add_argument("--failsafe", type=float, default=DEFAULT_FAILSAFE_S)
+    parser.add_argument("--lockout", type=float, default=DEFAULT_LOCKOUT_S)
     parser.add_argument("--limit", type=int, default=0, help="stop after N lines")
     args = parser.parse_args(argv)
 
-    hold = Hold(args.hold)
+    receiver = Receiver(args.failsafe, args.lockout)
     path = Path(args.source)
-    live = not (path.exists() and path.is_file())
 
-    if live:
+    if not (path.exists() and path.is_file()):
         import serial
 
-        port = serial.Serial(args.source, args.baud, timeout=0.1)
+        port = serial.Serial(timeout=0.05)
+        port.port = args.source
+        port.dtr = False
+        port.rts = False
+        port.open()
         count = 0
         try:
             while not args.limit or count < args.limit:
                 raw = port.readline().decode("utf-8", "replace")
                 now = time.monotonic()
                 if raw.strip():
-                    print(hold.receive(raw, now))
+                    print(receiver.receive(raw, now))
                     count += 1
-                tripped = hold.tick(now)
-                if tripped:
-                    print(tripped)
+                else:
+                    row = receiver.tick(now)
+                    if row:
+                        print(row)
         except KeyboardInterrupt:
             pass
     else:
-        # A capture has no timing, so every line is treated as arriving in turn.
+        # A capture has no timing, so lines are treated as arriving 50 ms apart.
         for count, line in enumerate(path.read_text().splitlines(), 1):
             if line.strip():
-                print(hold.receive(line, float(count)))
+                print(receiver.receive(line + "\n", count * 0.05))
             if args.limit and count >= args.limit:
                 break
 
     print(
-        f"-- accepted {hold.accepted}  rejected {hold.rejected}  "
-        f"failsafe trips {hold.failsafe_trips}  holding {hold.values}"
+        f"-- forwarded {receiver.accepted}  rejected {receiver.rejected}  "
+        f"ignored {receiver.ignored}  failsafe trips {receiver.failsafe_trips}  "
+        f"state {receiver.state}  output {receiver.output}"
     )
     return 0
 
