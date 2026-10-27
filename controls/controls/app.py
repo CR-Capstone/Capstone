@@ -22,6 +22,7 @@ from .link import SerialLink
 from .pages import PAGES
 
 STATUS_INTERVAL_MS = 100
+BLUR_SETTLE_MS = 100
 
 
 class MainWindow(QMainWindow):
@@ -95,8 +96,13 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.banner)
 
     def _set_banner(self, armed: bool, detail: str) -> None:
-        color = theme.DANGER if armed else theme.OK
-        self.banner.setText(f"ARMED · {detail}" if armed else "DISARMED")
+        arming = armed and self.engine.state == "arming"
+        color = theme.WARN if arming else theme.DANGER if armed else theme.OK
+        if arming:
+            text = f"ARMING · {self.engine.arming_status()}"
+        else:
+            text = f"ARMED · {detail}" if armed else "DISARMED"
+        self.banner.setText(text)
         self.banner.setStyleSheet(
             f"background:{color}; color:#101923; padding:8px; border-radius:4px;"
         )
@@ -163,7 +169,11 @@ class MainWindow(QMainWindow):
         self.engine.disarm(reason)
 
     def _on_armed(self, armed: bool, reason: str) -> None:
+        # Reflect the engine without re-entering _toggle_arm, which would ask
+        # for confirmation again.
+        self.arm_button.blockSignals(True)
         self.arm_button.setChecked(armed)
+        self.arm_button.blockSignals(False)
         self.arm_button.setText("ARMED — click to stop" if armed else "ARM")
         self._set_banner(armed, reason)
 
@@ -175,7 +185,12 @@ class MainWindow(QMainWindow):
         self._update_arm_enabled()
 
     def _refresh_status(self) -> None:
+        if self.engine.state == "arming":
+            self._set_banner(True, "")
         port = self.link.port_name or "no port"
+        lockout = self.engine.receiver_ready_in() if self.link.is_open else 0.0
+        if lockout > 0.0:
+            port += f" (receiver may be locked out {lockout:4.1f} s)"
         last = self.engine.last_frame
         wire = last.line.decode("ascii", "replace").strip() if last else "—"
         self.status_label.setText(
@@ -194,8 +209,15 @@ class MainWindow(QMainWindow):
             and not self.isActiveWindow()
             and self.disarm_on_blur.isChecked()
         ):
-            self.panic("window lost focus")
+            # Focus moving to this app's own dialog (the arm confirmation) is
+            # not leaving. Wayland reports no active window between the leave
+            # and the enter, so look again once the move has settled.
+            QTimer.singleShot(BLUR_SETTLE_MS, self._check_blur)
         super().changeEvent(event)
+
+    def _check_blur(self) -> None:
+        if self.disarm_on_blur.isChecked() and QApplication.activeWindow() is None:
+            self.panic("window lost focus")
 
     def closeEvent(self, event) -> None:
         self.engine.disarm("closing")

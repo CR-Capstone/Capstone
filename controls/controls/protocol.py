@@ -1,12 +1,13 @@
-"""The serial line contract shared with the firmware.
+"""The serial line contract shared with the sender ESP32 (remote-dshot).
 
-One text line per control frame::
+One text line per control update::
 
-    "<motor 1 frame> <motor 2 frame>\\n"        e.g.  b"49541 17544\\n"
+    "<motor 1 value> <motor 2 value>\\n"        e.g.  b"1548 548\\n"
 
-Each number is the complete 16-bit DShot frame from :mod:`controls.dshot`,
-unsigned, decimal by default. Hexadecimal is accepted on both sides for
-hand-typed bench work; the firmware distinguishes the two by the ``0x`` prefix.
+Each number is the bare 11-bit DShot value, 0..2047, in decimal: 0 disarms or
+arms, 1..47 are ESC commands, 48..2047 throttle. The receiver ESP32 builds the
+16-bit frame and checksum itself. The sender rejects anything else (a third
+field, a sign, hex, a value over 2047) with a ``Bad line`` log on the same port.
 
 Keep every change to the wire format in this module. Nothing else in the app
 builds or reads a line.
@@ -15,28 +16,28 @@ from __future__ import annotations
 
 TERMINATOR = "\n"
 ENCODING = "ascii"
+VALUE_MAX = 2047
 
 
-def encode(frame1: int, frame2: int, hex_mode: bool = False) -> bytes:
-    """Serialise one control frame. Raises on anything that is not 16-bit."""
+def encode(value1: int, value2: int) -> bytes:
+    """Serialise one control update. Raises on anything outside 0..2047."""
     words = []
-    for word in (frame1, frame2):
-        word = int(word)
-        if not 0 <= word <= 0xFFFF:
-            raise ValueError(f"frame {word} outside 0..65535")
-        words.append(f"0x{word:04X}" if hex_mode else str(word))
+    for value in (value1, value2):
+        value = int(value)
+        if not 0 <= value <= VALUE_MAX:
+            raise ValueError(f"DShot value {value} outside 0..{VALUE_MAX}")
+        words.append(str(value))
     return (" ".join(words) + TERMINATOR).encode(ENCODING)
 
 
 def decode(line: str) -> tuple[int, int]:
-    """Parse one control frame back out of a line, for tests and the console."""
-    parts = line.strip().split()
-    if len(parts) != 2:
-        raise ValueError(f"expected two fields, got {len(parts)}: {line!r}")
-    words = []
-    for part in parts:
-        word = int(part, 16) if part.lower().startswith("0x") else int(part, 10)
-        if not 0 <= word <= 0xFFFF:
-            raise ValueError(f"frame {word} outside 0..65535")
-        words.append(word)
-    return words[0], words[1]
+    """Parse one update back out of a line, as strictly as the sender does."""
+    text = line.rstrip("\r\n")
+    parts = text.split(" ")
+    if len(parts) != 2 or not all(part.isdigit() for part in parts):
+        raise ValueError(f"expected two unsigned decimal fields: {line!r}")
+    values = tuple(int(part) for part in parts)
+    for value in values:
+        if value > VALUE_MAX:
+            raise ValueError(f"DShot value {value} outside 0..{VALUE_MAX}")
+    return values[0], values[1]

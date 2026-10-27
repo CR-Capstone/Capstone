@@ -83,3 +83,25 @@ class Gait:
     def period(self) -> float:
         """Seconds per cycle, or 0 when stationary."""
         return 1.0 / self.frequency if self.frequency > 0.0 else 0.0
+
+
+# The droopy simulator's gait (droopy.control.Command with the presets in
+# droopy.presets), normalised by the sim's max rotor speed. Both weights scale
+# to the same 0.49 base and 0.40 swing; only the frequency changes. Neither
+# rotor ever reverses: the swing stays inside the base.
+PRESETS: dict[str, Gait] = {
+    "Droopy sim gait, 9 lb (0.83 Hz)": Gait(
+        spin=0.49, amplitude=0.40, frequency=0.83, ramp_s=3.0,
+    ),
+    "Droopy sim gait, 3 lb (1.0 Hz)": Gait(
+        spin=0.49, amplitude=0.40, frequency=1.0, ramp_s=3.0,
+    ),
+    # The control study's "gentle" candidate: 0.75x swing at 0.80x frequency.
+    # Far less body yaw, far less speed. A first floor test, not a gait.
+    "Gentle walk, 9 lb (3/4 swing, 0.66 Hz)": Gait(
+        spin=0.49, amplitude=0.30, frequency=0.66, ramp_s=3.0,
+    ),
+    "Constant counter-spin": Gait(
+        spin=0.49, amplitude=0.0, frequency=0.83, ramp_s=3.0,
+    ),
+}

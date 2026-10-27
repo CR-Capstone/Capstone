@@ -62,11 +62,60 @@ def test_running_a_bench_test_drives_the_output(qt_app):
     try:
         bench = window.pages[1]
         window.tabs.setCurrentIndex(1)
-        bench.tests.setCurrentRow(3)          # counter-rotate check
+        names = [bench.tests.item(i).text() for i in range(bench.tests.count())]
+        bench.tests.setCurrentRow(names.index("Counter-rotate check"))
         bench.run_button.setChecked(True)
         assert bench.sample(0.0) == (0.0, 0.0)  # settles first
         assert bench.sample(3.0) == (0.12, -0.12)
         bench.run_button.setChecked(False)
         assert bench.sample(3.0) == (0.0, 0.0)  # sliders are back, at zero
+    finally:
+        window.close()
+
+
+def test_confirming_arm_does_not_loop_or_disarm(qt_app, monkeypatch):
+    """The confirm dialog takes focus; that must not count as leaving the app."""
+    from PySide6.QtWidgets import QApplication, QMessageBox
+
+    window = MainWindow()
+    try:
+        window.tabs.setCurrentIndex(1)
+        asked = []
+
+        def confirm(*_args, **_kwargs):
+            asked.append(True)
+            window._check_blur()            # focus is on our own dialog
+            return QMessageBox.StandardButton.Yes
+
+        monkeypatch.setattr(QMessageBox, "question", confirm)
+        monkeypatch.setattr(QApplication, "activeWindow", lambda: window)
+        monkeypatch.setattr(window.link, "_port", type("P", (), {"is_open": True})())
+        monkeypatch.setattr(window.link, "write", lambda payload: True)
+        window._update_arm_enabled()
+        window.arm_button.setChecked(True)
+        assert asked == [True]                  # asked once, not in a loop
+        assert window.engine.state == "arming"
+        assert window.arm_button.isChecked()
+    finally:
+        window.engine.disarm("test")
+        window.close()
+
+
+def test_focus_leaving_the_app_disarms(qt_app, monkeypatch):
+    from PySide6.QtWidgets import QApplication
+
+    window = MainWindow()
+    try:
+        window.tabs.setCurrentIndex(1)
+        monkeypatch.setattr(window.link, "_port", type("P", (), {"is_open": True})())
+        monkeypatch.setattr(window.link, "write", lambda payload: True)
+        window.confirm_arm.setChecked(False)
+        window._update_arm_enabled()
+        window.arm_button.setChecked(True)
+        assert window.engine.armed
+        monkeypatch.setattr(QApplication, "activeWindow", lambda: None)
+        window._check_blur()
+        assert not window.engine.armed
+        assert not window.arm_button.isChecked()
     finally:
         window.close()

@@ -89,11 +89,28 @@ def custom_ramp(target: float, seconds: float, mirrored: bool) -> Sequence:
     )
 
 
+# remote-dshot's ramp_test.py steps one count every 50 ms: 500 counts is 25 s.
+RAMP_TEST_LEG_S = 25.0
+
 TESTS: tuple[Sequence, ...] = (
     Sequence(
         "Arm check",
-        "Both ESCs beep their arming tone and nothing turns.",
-        (Step(3.0, 0.0, 0.0, label="zero throttle"),),
+        "Arming sends 0 for 1.6 s, then neutral for 0.4 s. Both ESCs play "
+        "their armed tone and nothing turns.",
+        (Step(3.0, 0.0, 0.0, label="neutral"),),
+    ),
+    Sequence(
+        "Ramp test (ramp_test.py)",
+        "The known-good remote-dshot ramp: both motors forward up to 50% "
+        "(1548) and back, 2 s at neutral, then reverse up to 50% (548) and "
+        "back. Same values and timing as the script.",
+        (
+            Step(RAMP_TEST_LEG_S, 0.5, 0.5, ramp=True, label="forward ramp up"),
+            Step(RAMP_TEST_LEG_S, 0.0, 0.0, ramp=True, label="forward ramp down"),
+            Step(2.0, 0.0, 0.0, label="neutral"),
+            Step(RAMP_TEST_LEG_S, -0.5, -0.5, ramp=True, label="reverse ramp up"),
+            Step(RAMP_TEST_LEG_S, 0.0, 0.0, ramp=True, label="reverse ramp down"),
+        ),
     ),
     Sequence(
         "Direction — motor 1",

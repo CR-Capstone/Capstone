@@ -24,9 +24,9 @@ from PySide6.QtWidgets import (
 from .. import dshot, theme
 from ..packets import PacketView
 from ..scope import MotorReadout, Scope
-from ..waveform import SHAPES, TWO_PI, Gait
+from ..waveform import PRESETS, SHAPES, TWO_PI, Gait
 from ..widgets import ValueSlider
-from .base import ControlPage, reverse_warning
+from .base import ControlPage, reverse_warning, zero_crossing_warning
 
 PREVIEW_CYCLES = 2.0
 PREVIEW_POINTS = 400
@@ -138,6 +138,17 @@ class GaitPage(ControlPage):
         box = QGroupBox("Waveform")
         form = QFormLayout(box)
 
+        self.preset = QComboBox()
+        self.preset.addItem("Load a preset…")
+        for name in PRESETS:
+            self.preset.addItem(name)
+        self.preset.setToolTip(
+            "Sim gaits are fractions of the simulator's max rotor speed. Until "
+            "the real rotor's full-throttle speed is measured, treat them as a "
+            "shape to start from, not a speed."
+        )
+        self.preset.activated.connect(self._load_preset)
+
         self.shape = QComboBox()
         self.shape.addItems(SHAPES)
         self.shape.currentTextChanged.connect(self._refresh)
@@ -161,6 +172,7 @@ class GaitPage(ControlPage):
         self.frequency.setToolTip("Cycles per second. For a melty-style robot this is the spin rate.")
         self.offset.setToolTip("Phase shift applied to motor 2 only. Leave at 0 to match the simulator.")
 
+        form.addRow("Preset", self.preset)
         form.addRow("Shape", self.shape)
         form.addRow("Spin base", self.spin)
         form.addRow("Amplitude", self.amplitude)
@@ -190,6 +202,22 @@ class GaitPage(ControlPage):
 
     # ---- behaviour -----------------------------------------------------
 
+    def _load_preset(self, index: int) -> None:
+        name = self.preset.itemText(index)
+        if name not in PRESETS:
+            return
+        gait = PRESETS[name]
+        self.shape.setCurrentText(gait.shape_name)
+        for slider, value in (
+            (self.spin, gait.spin), (self.amplitude, gait.amplitude),
+            (self.frequency, gait.frequency), (self.bias, gait.bias),
+            (self.phase, gait.phase_deg), (self.offset, gait.offset_deg),
+            (self.ramp, gait.ramp_s),
+        ):
+            slider.setValue(value)
+        self.counter.setChecked(gait.counter_rotate)
+        self.preset.setCurrentIndex(0)
+
     def _refresh(self, *_args) -> None:
         """Push every control into the gait and update the derived text."""
         self.gait.shape_name = self.shape.currentText()
@@ -204,10 +232,15 @@ class GaitPage(ControlPage):
         self.gait.enabled = self.enabled.isChecked()
         self.preview.update()
 
-        peaks, lows = self._extremes()
+        peaks, lows, highs = self._extremes()
         period = self.gait.period()
         clipping = max(peaks) > 1.0
-        warning = reverse_warning(self.engine, (lows[0] < 0.0, lows[1] < 0.0))
+        warning = "\n".join(w for w in (
+            reverse_warning(self.engine, (lows[0] < 0.0, lows[1] < 0.0)),
+            zero_crossing_warning(tuple(
+                lows[i] < 0.0 < highs[i] for i in (0, 1)
+            )),
+        ) if w)
         lines = [
             f"period {period:6.3f} s    peak |demand|  "
             f"M1 {peaks[0]:.3f}  M2 {peaks[1]:.3f}"
@@ -234,7 +267,7 @@ class GaitPage(ControlPage):
         raised enough to quantise it.
         """
         config = self.engine.config
-        span = dshot.HALF_SPAN if config.maps[0].three_d else dshot.FULL_SPAN
+        span = dshot.FORWARD_SPAN if config.maps[0].three_d else dshot.FULL_SPAN
         # Peak slope of the commanded wave, in DShot counts per evaluation.
         per_tick = (
             self.gait.amplitude * span * TWO_PI * self.gait.frequency
@@ -252,17 +285,18 @@ class GaitPage(ControlPage):
             f"{duty * config.rate_hz:.0f} of {config.rate_hz} evaluations send"
         )
 
-    def _extremes(self) -> tuple[list[float], list[float]]:
-        """Largest magnitude and smallest signed value per motor over one cycle."""
+    def _extremes(self) -> tuple[list[float], list[float], list[float]]:
+        """Largest magnitude, and smallest and largest signed value, per motor."""
         steady = replace(self.gait, ramp_s=0.0, enabled=True)
         period = steady.period() or 1.0
-        peaks, lows = [0.0, 0.0], [0.0, 0.0]
+        peaks, lows, highs = [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]
         for step in range(180):
             values = steady.raw(period * step / 180.0)
             for index in (0, 1):
                 peaks[index] = max(peaks[index], abs(values[index]))
                 lows[index] = min(lows[index], values[index])
-        return peaks, lows
+                highs[index] = max(highs[index], values[index])
+        return peaks, lows, highs
 
     def _restart(self) -> None:
         self.engine.disarm("cycle restart")

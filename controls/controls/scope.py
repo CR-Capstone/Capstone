@@ -83,7 +83,7 @@ class Scope(QWidget):
                     rect.left() + 6,
                     rect.top() + 14 + index * 15,
                     f"M{index + 1}  {self.last.demand[index]:+.3f}  "
-                    f"dshot {value:4d}  frame {word:5d}{flag}",
+                    f"dshot {value:4d}  ESC 0x{word:04X}{flag}",
                 )
         painter.setPen(QPen(QColor("#5d718c")))
         painter.setFont(QFont("Menlo", 9))

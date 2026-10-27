@@ -1,85 +1,97 @@
-"""The wire format is the contract with the firmware; pin it down."""
+"""The wire format is the contract with the sender ESP32; pin it down."""
 import pytest
 
 from controls import protocol
 
 
-def test_decimal_line():
-    # Frames for DShot values 1548 and 548: half forward and half reverse in 3-D.
-    assert protocol.encode(49541, 17544) == b"49541 17544\n"
+def test_decimal_line_of_bare_values():
+    # ramp_test.py's 50% forward and 50% reverse.
+    assert protocol.encode(1548, 548) == b"1548 548\n"
+    assert protocol.encode(0, 2047) == b"0 2047\n"
 
 
-def test_hex_line():
-    assert protocol.encode(0xC185, 0x4488, hex_mode=True) == b"0xC185 0x4488\n"
+def test_round_trip():
+    assert protocol.decode("1548 548") == (1548, 548)
+    assert protocol.decode("1048 1048\r\n") == (1048, 1048)
 
 
-def test_round_trip_both_radixes():
-    assert protocol.decode("49541 17544") == (49541, 17544)
-    assert protocol.decode("0xC185 0x4488\r\n") == (0xC185, 0x4488)
-
-
-def test_rejects_out_of_range_and_wrong_arity():
+def test_rejects_what_the_sender_rejects():
     with pytest.raises(ValueError):
-        protocol.encode(65536, 0)
+        protocol.encode(2048, 0)            # over 11 bits
     with pytest.raises(ValueError):
-        protocol.decode("1 2 3")
-    with pytest.raises(ValueError):
-        protocol.decode("1")
+        protocol.encode(-1, 0)
+    for bad in ("1 2 3", "1", "0xC185 0x4488", "1048  1048", "-5 5", "49541 17544"):
+        with pytest.raises(ValueError):
+            protocol.decode(bad)
 
 
-def test_firmware_reference_reads_what_the_app_writes():
-    """The receiver in tools/ must decode a line the app just produced."""
-    from firmware_reference import Hold
+def test_reference_receiver_forwards_what_the_app_writes():
+    from firmware_reference import ACTIVE, Receiver
 
-    from controls import dshot
-
-    line = protocol.encode(dshot.frame(1548), dshot.frame(548)).decode()
-    hold = Hold()
-    row = hold.receive(line, 0.0)
-    assert "throttle 1548" in row and "throttle 548" in row
-    assert "BAD" not in row
-    assert hold.values == (1548, 548)
-    assert hold.receive("not a frame", 0.1).startswith("REJECT")
+    receiver = Receiver()
+    row = receiver.receive(protocol.encode(1548, 548).decode(), 0.0)
+    assert "OUTPUT STARTED" in row
+    assert receiver.state == ACTIVE
+    assert receiver.output == (1548, 548)
+    assert receiver.receive("not a line", 0.05).startswith("REJECT")
+    assert receiver.output == (1548, 548)
 
 
-def test_firmware_reference_rejects_a_corrupt_checksum():
-    """A flipped bit must not reach the ESCs."""
-    from firmware_reference import Hold
+def test_reference_receiver_fails_safe_then_locks_out():
+    """A gap over 500 ms stops output, then every packet is ignored for 10 s."""
+    from firmware_reference import IDLE, LOCKOUT, Receiver
 
-    from controls import dshot
-
-    hold = Hold()
-    hold.receive(protocol.encode(dshot.frame(1548), dshot.frame(548)).decode(), 0.0)
-    bad = protocol.encode(dshot.frame(1548) ^ 0x1, dshot.frame(548)).decode()
-    assert "REJECT" in hold.receive(bad, 0.1)
-    assert hold.values == (1548, 548)   # the previous packet is still held
-
-
-def test_firmware_reference_holds_then_fails_safe():
-    """Silence past the timeout forces the outputs to zero."""
-    from firmware_reference import Hold
-
-    from controls import dshot
-
-    hold = Hold(timeout_s=2.0)
-    hold.receive(protocol.encode(dshot.frame(1548), dshot.frame(548)).decode(), 0.0)
-    assert hold.tick(1.9) is None           # still inside the hold
-    assert hold.values == (1548, 548)
-    assert "FAILSAFE" in hold.tick(2.0)
-    assert hold.values == (0, 0)
-    assert hold.tick(5.0) is None           # trips once, not every check
-    assert hold.failsafe_trips == 1
+    receiver = Receiver()
+    line = protocol.encode(1548, 548).decode()
+    receiver.receive(line, 0.0)
+    assert receiver.tick(0.45) is None
+    assert "FAILSAFE" in receiver.tick(0.55)
+    assert receiver.state == LOCKOUT and receiver.output is None
+    assert receiver.receive(line, 5.0).startswith("IGNORE")
+    assert receiver.output is None
+    assert "lockout over" in receiver.tick(10.6)
+    assert receiver.state == IDLE
+    assert "OUTPUT STARTED" in receiver.receive(line, 10.7)
+    assert receiver.failsafe_trips == 1
 
 
-def test_firmware_reference_resumes_after_a_failsafe():
-    from firmware_reference import Hold
+def test_reference_receiver_measures_a_late_packet_by_its_arrival():
+    from firmware_reference import LOCKOUT, Receiver
 
-    from controls import dshot
+    receiver = Receiver()
+    line = protocol.encode(1048, 1048).decode()
+    receiver.receive(line, 0.0)
+    row = receiver.receive(line, 0.6)
+    assert "FAILSAFE" in row and "IGNORE" in row
+    assert receiver.state == LOCKOUT
 
-    hold = Hold(timeout_s=1.0)
-    line = protocol.encode(dshot.frame(1548), dshot.frame(548)).decode()
-    hold.receive(line, 0.0)
-    hold.tick(2.0)
-    assert "RESUMED" in hold.receive(line, 2.1)
-    assert hold.failsafe is False
-    assert hold.values == (1548, 548)
+
+def test_app_keepalive_never_trips_the_reference_receiver(qt_app, monkeypatch):
+    """Drive the real engine for 30 s and feed every line to the receiver model."""
+    from firmware_reference import ACTIVE, Receiver
+
+    from controls import engine as engine_module
+    from test_engine import Clock, LoopbackLink
+
+    clock = Clock()
+    monkeypatch.setattr(engine_module.time, "perf_counter", clock)
+    link = LoopbackLink()
+    engine = engine_module.OutputEngine(link)
+    engine.stop()
+    engine.set_source(lambda t: (0.3, -0.3), "test")
+    receiver = Receiver()
+    armed_once = False
+    for step in range(6000):                # 30 s at 200 Hz
+        clock.advance(0.005)
+        if step == 200:
+            engine.arm()
+        engine._tick()
+        for line in link.lines:
+            receiver.receive(line.decode(), clock.now)
+        link.lines.clear()
+        receiver.tick(clock.now)
+        armed_once = armed_once or engine.state == "armed"
+    assert armed_once and engine.state == "armed"
+    assert receiver.failsafe_trips == 0
+    assert receiver.state == ACTIVE
+    assert receiver.output == (1049 + round(0.3 * 998), 48 + round(0.3 * 999))

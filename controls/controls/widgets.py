@@ -1,15 +1,8 @@
 """Small shared input widgets used by more than one page."""
 from __future__ import annotations
 
-import math
-
-from PySide6.QtCore import QPointF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
-from PySide6.QtWidgets import (
-    QDoubleSpinBox, QHBoxLayout, QSizePolicy, QSlider, QWidget,
-)
-
-from . import theme
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QDoubleSpinBox, QHBoxLayout, QSlider, QWidget
 
 SLIDER_STEPS = 1000
 
@@ -76,78 +69,3 @@ class ValueSlider(QWidget):
         self.slider.setValue(round((value - self.low) / span * SLIDER_STEPS))
         self._guard = False
         self.changed.emit(value)
-
-
-class HeadingDial(QWidget):
-    """Click-and-drag compass. Emits the requested heading in degrees.
-
-    Heading is the gait's phase: it chooses where in each rotation the common
-    perturbation peaks. Whether 0 degrees points where the robot actually goes
-    depends on wiring and the real contact behaviour, so treat the number as a
-    repeatable handle, not a calibrated direction.
-    """
-
-    changed = Signal(float)
-
-    def __init__(self, heading: float = 0.0) -> None:
-        super().__init__()
-        self._heading = float(heading)
-        self.setMinimumSize(170, 170)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-
-    def heading(self) -> float:
-        return self._heading
-
-    def setHeading(self, degrees: float) -> None:
-        self._heading = float(degrees) % 360.0
-        self.update()
-        self.changed.emit(self._heading)
-
-    def mousePressEvent(self, event) -> None:
-        self._track(event)
-
-    def mouseMoveEvent(self, event) -> None:
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            self._track(event)
-
-    def _track(self, event) -> None:
-        center = QPointF(self.width() / 2.0, self.height() / 2.0)
-        delta = event.position() - center
-        self.setHeading(math.degrees(math.atan2(delta.x(), -delta.y())))
-
-    def paintEvent(self, event) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(self.rect(), QColor(theme.BACKGROUND))
-        center = QPointF(self.width() / 2.0, self.height() / 2.0)
-        radius = min(self.width(), self.height()) / 2.0 - 14
-
-        painter.setPen(QPen(QColor(theme.GRID), 1))
-        painter.drawEllipse(center, radius, radius)
-        painter.setFont(QFont("Menlo", 9))
-        for degrees in range(0, 360, 30):
-            angle = math.radians(degrees)
-            outer = QPointF(
-                center.x() + math.sin(angle) * radius,
-                center.y() - math.cos(angle) * radius,
-            )
-            inner = QPointF(
-                center.x() + math.sin(angle) * radius * 0.88,
-                center.y() - math.cos(angle) * radius * 0.88,
-            )
-            painter.setPen(QPen(QColor(theme.GRID), 1))
-            painter.drawLine(inner, outer)
-
-        angle = math.radians(self._heading)
-        tip = QPointF(
-            center.x() + math.sin(angle) * radius * 0.82,
-            center.y() - math.cos(angle) * radius * 0.82,
-        )
-        painter.setPen(QPen(QColor(theme.MOTOR_COLORS[0]), 3))
-        painter.drawLine(center, tip)
-        painter.setPen(QPen(QColor(theme.TEXT)))
-        painter.drawText(
-            self.rect().adjusted(0, 0, 0, -2),
-            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom,
-            f"{self._heading:5.1f}°",
-        )

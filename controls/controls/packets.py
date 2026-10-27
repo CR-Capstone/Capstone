@@ -1,8 +1,9 @@
 """Literal view of the frames leaving the app.
 
 The scope shows demand over time; this shows the bytes. For the most recent
-frame it breaks each motor down the way the ESC reads it — payload, value,
-telemetry bit, checksum — and prints the exact line that went out. Below that
+frame it prints the exact line that went out (two bare DShot values) and
+breaks each motor down the way the ESC reads the frame the receiver builds
+from it — payload, value, telemetry bit, checksum. Below that
 is a decimated log, because a 200 Hz stream is not readable at full rate.
 
 Only frames that actually went out appear here. Frames the engine held back
@@ -30,13 +31,14 @@ def describe(value: int, word: int, demand: float, index: int) -> str:
     kind = (
         "disarmed" if decoded == dshot.DISARMED
         else f"command {decoded}" if decoded < dshot.MIN_THROTTLE
+        else "3-D neutral" if decoded == dshot.NEUTRAL_3D
         else "throttle"
     )
     return (
         f"M{index + 1}   demand {demand:+.3f}   dshot {decoded:4d}  {kind}\n"
         f"     payload 0x{payload:03X}   value 0b{decoded:011b}   "
         f"telem {int(telemetry)}   crc 0x{word & 0xF:X} {'ok' if ok else 'BAD'}\n"
-        f"     frame   0x{word:04X}   {word}"
+        f"     ESC frame 0x{word:04X}   (built by the receiver)"
     )
 
 
